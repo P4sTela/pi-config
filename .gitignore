@@ -1,0 +1,17 @@
+# Secrets — never commit
+auth.json
+
+# Session history (may contain sensitive data, changes constantly)
+sessions/
+
+# Machine-local state
+trust.json
+
+# Packages installed via `pi install` (re-installable, not source)
+git/
+npm/
+
+# OS / editor cruft
+.DS_Store
+*.swp
+node_modules/
