@@ -3,5 +3,16 @@
   "theme": "dark",
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-4-8",
-  "defaultThinkingLevel": "medium"
+  "defaultThinkingLevel": "medium",
+  "enabledModels": [
+    "claude-opus-4-8",
+    "claude-sonnet-4-6"
+  ],
+  "shellCommandPrefix": "export PATH=\"$HOME/.pi/agent/npm/node_modules/.bin:$PATH\"",
+  "packages": [
+    "npm:@hypabolic/pi-hypa",
+    "npm:pi-web-access",
+    "npm:pi-lens",
+    "npm:pi-subagents"
+  ]
 }
