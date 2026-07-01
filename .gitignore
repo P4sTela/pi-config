@@ -1,7 +1,8 @@
 # Secrets — never commit
 auth.json
 
-# Session history (may contain sensitive data, changes constantly)
+# Session history / run history (may contain sensitive data, changes constantly)
+run-history.jsonl
 sessions/
 
 # Machine-local state
