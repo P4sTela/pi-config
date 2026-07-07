@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.80.2",
+  "lastChangelogVersion": "0.80.3",
   "theme": "dark",
   "defaultProvider": "opencode-go",
   "defaultModel": "deepseek-v4-pro",
@@ -9,7 +9,9 @@
     "deepseek-v4-flash",
     "kimi-k2.7-code",
     "glm-5.2",
-    "qwen3.7-max"
+    "qwen3.7-max",
+    "rglm/glm-5.2",
+    "rglm/glm-4.5-flash"
   ],
   "shellCommandPrefix": "export PATH=\"$HOME/.pi/agent/npm/node_modules/.bin:$PATH\"",
   "packages": [

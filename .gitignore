@@ -1,5 +1,6 @@
 # Secrets — never commit
 auth.json
+models.json
 
 # Session history / run history (may contain sensitive data, changes constantly)
 run-history.jsonl
