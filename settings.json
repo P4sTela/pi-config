@@ -1,8 +1,8 @@
 {
-  "lastChangelogVersion": "0.80.3",
+  "lastChangelogVersion": "0.80.6",
   "theme": "dark",
-  "defaultProvider": "opencode-go",
-  "defaultModel": "deepseek-v4-pro",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.6-terra",
   "defaultThinkingLevel": "high",
   "enabledModels": [
     "deepseek-v4-pro",
@@ -11,7 +11,8 @@
     "glm-5.2",
     "qwen3.7-max",
     "rglm/glm-5.2",
-    "rglm/glm-4.5-flash"
+    "rglm/glm-4.5-flash",
+    "gpt-5.6-*"
   ],
   "shellCommandPrefix": "export PATH=\"$HOME/.pi/agent/npm/node_modules/.bin:$PATH\"",
   "packages": [

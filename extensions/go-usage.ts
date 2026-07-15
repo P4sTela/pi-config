@@ -1,16 +1,16 @@
 /**
- * go-usage — OpenCode Go 専用の軽量 usage checker
+ * usage — Codex と OpenCode Go の軽量 usage checker
  *
- * pi-usage から Codex 部分を削ぎ落とし、OpenCode Go の使用量だけを表示する。
- * ダッシュボードスクレイピング + モデルプローブのフォールバック。
+ * Codex は ChatGPT OAuth の usage endpoint、OpenCode Go は
+ * ダッシュボードスクレイピング + モデルプローブのフォールバックで確認する。
  */
 
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { execSync } from "node:child_process";
-import { getModels } from "@mariozechner/pi-ai";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { getModels } from "@earendil-works/pi-ai/compat";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 // ─── config ───
 
@@ -459,7 +459,7 @@ interface GoUsage {
 	monthly?: QuotaWindow;
 }
 
-async function checkAll(): Promise<GoUsage> {
+async function checkGo(): Promise<GoUsage> {
 	const apiKey = getApiKey();
 	if (!apiKey) return { available: false, status: "no_key" };
 
@@ -486,10 +486,119 @@ async function checkAll(): Promise<GoUsage> {
 	return { ...probe };
 }
 
+// ─── Codex usage ───
+
+interface CodexWindow {
+	usedPercent: number;
+	resetAfterSec: number;
+	resetAt: number;
+}
+
+interface CodexUsage {
+	status: "available" | "rate_limited" | "error" | "no_auth";
+	planType?: string;
+	primary?: CodexWindow;
+	secondary?: CodexWindow;
+	errorMessage?: string;
+}
+
+interface Usage {
+	go: GoUsage;
+	codex: CodexUsage;
+}
+
+function getCodexAuth():
+	| { accessToken: string; accountId?: string }
+	| undefined {
+	const auth = readAuth()?.["openai-codex"];
+	if (auth?.type !== "oauth" || typeof auth.access !== "string") return;
+	return {
+		accessToken: auth.access,
+		accountId: typeof auth.accountId === "string" ? auth.accountId : undefined,
+	};
+}
+
+function parseCodexWindow(value: unknown): CodexWindow | undefined {
+	if (!value || typeof value !== "object") return;
+	const w = value as Record<string, unknown>;
+	const usedPercent = Number(w.used_percent);
+	if (!Number.isFinite(usedPercent)) return;
+	return {
+		usedPercent: Math.max(0, Math.min(100, usedPercent)),
+		resetAfterSec: Math.max(0, Number(w.reset_after_seconds) || 0),
+		resetAt: Math.max(0, Number(w.reset_at) || 0),
+	};
+}
+
+async function fetchCodexUsage(): Promise<CodexUsage> {
+	const auth = getCodexAuth();
+	if (!auth) return { status: "no_auth" };
+
+	const ctrl = new AbortController();
+	const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+	try {
+		const headers: Record<string, string> = {
+			Accept: "application/json",
+			Authorization: `Bearer ${auth.accessToken}`,
+			"User-Agent": "codex-cli",
+		};
+		if (auth.accountId) headers["ChatGPT-Account-Id"] = auth.accountId;
+
+		const res = await fetch("https://chatgpt.com/backend-api/wham/usage", {
+			headers,
+			signal: ctrl.signal,
+		});
+		if (!res.ok) return { status: "error", errorMessage: `HTTP ${res.status}` };
+
+		const payload = (await res.json()) as {
+			plan_type?: unknown;
+			rate_limit?: {
+				limit_reached?: unknown;
+				primary_window?: unknown;
+				secondary_window?: unknown;
+			};
+		};
+		const primary = parseCodexWindow(payload.rate_limit?.primary_window);
+		const secondary = parseCodexWindow(payload.rate_limit?.secondary_window);
+		if (!primary && !secondary) {
+			return { status: "error", errorMessage: "no rate-limit data" };
+		}
+		return {
+			status:
+				payload.rate_limit?.limit_reached === true
+					? "rate_limited"
+					: "available",
+			planType:
+				typeof payload.plan_type === "string" ? payload.plan_type : undefined,
+			primary,
+			secondary,
+		};
+	} catch (e: unknown) {
+		return {
+			status: "error",
+			errorMessage: e instanceof Error ? e.message : String(e),
+		};
+	} finally {
+		clearTimeout(timer);
+	}
+}
+
+async function checkAll(): Promise<Usage> {
+	const [go, codex] = await Promise.all([checkGo(), fetchCodexUsage()]);
+	return { go, codex };
+}
+
 // ─── footer (compact one-liner) ───
 
-function footerLine(u: GoUsage | undefined): string | undefined {
-	if (!u) return;
+function codexFooter(u: CodexUsage): string {
+	if (u.status === "no_auth") return "Codex —";
+	if (u.status === "error") return "Codex ⚠";
+	const windows = [u.primary, u.secondary].filter(Boolean) as CodexWindow[];
+	const usage = windows.map((w) => `${w.usedPercent.toFixed(0)}%`).join("/");
+	return `Codex ${usage || (u.status === "rate_limited" ? "⏳" : "?")}`;
+}
+
+function goFooter(u: GoUsage): string {
 	const parts: string[] = [];
 	if (u.rolling) parts.push(`${u.rolling.used.toFixed(0)}%r`);
 	if (u.weekly) parts.push(`${u.weekly.used.toFixed(0)}%w`);
@@ -499,14 +608,20 @@ function footerLine(u: GoUsage | undefined): string | undefined {
 		rate_limited: "⏳",
 		credits_error: "✗",
 		error: "⚠",
+		no_key: "—",
 	};
 	const s = parts.length > 0 ? parts.join("/") : (icons[u.status] ?? "?");
 	return `Go ${s}`;
 }
 
+function footerLine(u: Usage | undefined): string | undefined {
+	if (!u) return;
+	return `${codexFooter(u.codex)} · ${goFooter(u.go)}`;
+}
+
 // ─── detailed notification (for /usage) ───
 
-function detailText(u: GoUsage): string {
+function detailGoText(u: GoUsage): string {
 	const lines: string[] = [];
 	const labels: Record<string, string> = {
 		available: "available",
@@ -542,10 +657,42 @@ function detailText(u: GoUsage): string {
 	return lines.join("\n");
 }
 
+function detailCodexText(u: CodexUsage): string {
+	const labels: Record<CodexUsage["status"], string> = {
+		available: "available",
+		rate_limited: "rate limited",
+		error: "error",
+		no_auth: "no auth",
+	};
+	const lines = [
+		`Codex (${u.planType ?? "unknown plan"}) — ${labels[u.status]}`,
+	];
+	for (const [label, window] of [
+		["primary", u.primary],
+		["secondary", u.secondary],
+	] as const) {
+		if (!window) continue;
+		const reset = window.resetAt
+			? ` resets ${dur(window.resetAt - Date.now() / 1000)}`
+			: window.resetAfterSec > 0
+				? ` resets in ${dur(window.resetAfterSec)}`
+				: "";
+		lines.push(
+			`  ${label.padEnd(9)} ${bar(window.usedPercent)} ${window.usedPercent.toFixed(0)}% used / ${(100 - window.usedPercent).toFixed(0)}% left${reset}`,
+		);
+	}
+	if (u.errorMessage) lines.push(`  ${u.errorMessage.substring(0, 100)}`);
+	return lines.join("\n");
+}
+
+function detailText(u: Usage): string {
+	return `${detailCodexText(u.codex)}\n\n${detailGoText(u.go)}`;
+}
+
 // ─── extension ───
 
 export default function (pi: ExtensionAPI) {
-	let usage: GoUsage | undefined;
+	let usage: Usage | undefined;
 	let loading = false;
 	let timer: ReturnType<typeof setInterval> | undefined;
 	let ctx: any;
@@ -558,7 +705,11 @@ export default function (pi: ExtensionAPI) {
 		try {
 			usage = await checkAll();
 		} catch (e: any) {
-			usage = { available: false, status: "error", errorMessage: e.message };
+			const message = e instanceof Error ? e.message : String(e);
+			usage = {
+				go: { available: false, status: "error", errorMessage: message },
+				codex: { status: "error", errorMessage: message },
+			};
 		}
 
 		loading = false;
@@ -566,10 +717,10 @@ export default function (pi: ExtensionAPI) {
 		if (c.hasUI) {
 			c.ui.setStatus("go-usage", footerLine(usage));
 			if (showDetail && usage) {
-				c.ui.notify(
-					detailText(usage),
-					usage.status === "available" ? "info" : "warning",
-				);
+				const healthy =
+					usage.codex.status === "available" &&
+					(usage.go.status === "available" || usage.go.status === "no_key");
+				c.ui.notify(detailText(usage), healthy ? "info" : "warning");
 			}
 		}
 	}
@@ -592,7 +743,7 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.registerCommand("usage", {
-		description: "Show OpenCode Go usage details",
+		description: "Show Codex and OpenCode Go usage details",
 		handler: async (_args: any, c: any) => {
 			await refresh(c, true);
 		},
