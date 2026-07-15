@@ -8,6 +8,7 @@ sessions/
 
 # Machine-local state
 trust.json
+bin/
 
 # Packages installed via `pi install` (re-installable, not source)
 git/
