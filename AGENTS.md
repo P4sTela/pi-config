@@ -26,11 +26,11 @@
   - Bad example: When encountering a deep-rooted error, trying to solve it yourself without launching a debugging agent.
 - How to call an agent: `pi --model <provider/model:effort> --fallback-models <provider/model:effort>,... -p '<instructions>'` (left-priority fallback)
   - When a delegated task needs a specific skill, specify it in the prompt: `pi ... -p '/skill:<skill-name> <instructions>'`
-- Default model: `opencode-go/deepseek-v4-pro:high`
+- Default model: `openai-codex/gpt-5.6-terra:high`
 - Model selection:
   - Difficulty: high
-    - Option: `--model 'opencode-go/kimi-k2.7-code:high'`
-    - Use for highly abstract problems such as design, difficult deep troubleshooting, or code reviews that require careful reasoning and high confidence.
+    - Option: `--model 'openai-codex/gpt-5.6-terra:high'`
+    - Use for design, difficult debugging, and code reviews requiring high confidence.
   - Difficulty: medium
     - Option: `--model 'opencode-go/deepseek-v4-pro:medium'`
     - Use for general coding tasks such as implementation from an existing design.
@@ -40,9 +40,10 @@
   - Specialty:
 
     | Model | Best for |
-    |-------|----------|
+    | ------- | ---------- |
+    | `opencode-go/kimi-k2.7-code` | Complex autonomous coding tasks |
     | `opencode-go/glm-5.2` | Front-end / web development |
-    | `opencode-go/qwen3.7-max` | High-difficulty reasoning (alt. to kimi) |
+    | `opencode-go/qwen3.7-max` | High-difficulty reasoning (alt. to Codex) |
 
 - When calling an agent, clearly communicate the background, goal, expected output, and what not to do.
 
