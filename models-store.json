@@ -120,6 +120,7 @@
           "low": null,
           "medium": null,
           "high": "high",
+          "xhigh": null,
           "max": "max"
         }
       },
@@ -144,7 +145,16 @@
           "sessionAffinityFormat": "openai-nosession"
         },
         "contextWindow": 500000,
-        "maxTokens": 500000
+        "maxTokens": 500000,
+        "thinkingLevelMap": {
+          "off": null,
+          "minimal": null,
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": null,
+          "max": null
+        }
       },
       {
         "id": "kimi-k2.6",
@@ -227,7 +237,16 @@
           "maxTokensField": "max_tokens"
         },
         "contextWindow": 1048576,
-        "maxTokens": 131072
+        "maxTokens": 131072,
+        "thinkingLevelMap": {
+          "off": null,
+          "minimal": null,
+          "low": null,
+          "medium": null,
+          "high": null,
+          "xhigh": null,
+          "max": "max"
+        }
       },
       {
         "id": "mimo-v2.5",
@@ -388,8 +407,8 @@
         "maxTokens": 65536
       }
     ],
-    "checkedAt": 1784698097391,
-    "lastModified": 1784661218000
+    "checkedAt": 1784773266135,
+    "lastModified": 1784724576000
   },
   "openai-codex": {
     "models": [
@@ -627,8 +646,8 @@
         }
       }
     ],
-    "checkedAt": 1784698097140,
-    "lastModified": 1784661216000
+    "checkedAt": 1784773266133,
+    "lastModified": 1784724573000
   },
   "github-copilot": {
     "models": [
@@ -1140,7 +1159,12 @@
         },
         "thinkingLevelMap": {
           "off": null,
-          "minimal": "low"
+          "minimal": "low",
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": null,
+          "max": null
         }
       },
       {
@@ -1233,7 +1257,11 @@
         "thinkingLevelMap": {
           "off": null,
           "minimal": "low",
-          "xhigh": "xhigh"
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": "xhigh",
+          "max": null
         }
       },
       {
@@ -1273,7 +1301,11 @@
         "thinkingLevelMap": {
           "off": null,
           "minimal": "low",
-          "xhigh": "xhigh"
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": "xhigh",
+          "max": null
         }
       },
       {
@@ -1304,7 +1336,11 @@
         "thinkingLevelMap": {
           "off": null,
           "minimal": "low",
-          "xhigh": "xhigh"
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": "xhigh",
+          "max": null
         }
       },
       {
@@ -1375,7 +1411,11 @@
         "thinkingLevelMap": {
           "off": null,
           "minimal": "low",
-          "xhigh": "xhigh"
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": "xhigh",
+          "max": null
         }
       },
       {
@@ -1415,6 +1455,9 @@
         "thinkingLevelMap": {
           "off": null,
           "minimal": "low",
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
           "xhigh": "xhigh",
           "max": "max"
         }
@@ -1456,6 +1499,9 @@
         "thinkingLevelMap": {
           "off": null,
           "minimal": "low",
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
           "xhigh": "xhigh",
           "max": "max"
         }
@@ -1497,6 +1543,9 @@
         "thinkingLevelMap": {
           "off": null,
           "minimal": "low",
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
           "xhigh": "xhigh",
           "max": "max"
         }
@@ -1555,10 +1604,19 @@
           "Editor-Version": "vscode/1.107.0",
           "Editor-Plugin-Version": "copilot-chat/0.35.0",
           "Copilot-Integration-Id": "vscode-chat"
+        },
+        "thinkingLevelMap": {
+          "off": null,
+          "minimal": null,
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": null,
+          "max": null
         }
       }
     ],
-    "checkedAt": 1784698097142,
-    "lastModified": 1784661201000
+    "checkedAt": 1784773267795,
+    "lastModified": 1784724556000
   }
 }
