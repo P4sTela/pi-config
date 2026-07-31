@@ -9,6 +9,7 @@ sessions/
 # Machine-local state
 trust.json
 bin/
+models-store.json
 
 # Packages installed via `pi install` (re-installable, not source)
 git/

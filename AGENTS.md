@@ -60,6 +60,11 @@
 - For fetching page content or GitHub repositories, use the `fetch_content` tool directly.
   - GitHub URLs are cloned locally for accurate file access, not scraped as HTML.
 
+## Tool Overlap (pi-hypa / pi-subagents)
+
+- Prefer the standard `read` / `bash` / `edit` / `write` tools over the `hypa_*` equivalents (`hypa_shell`, `hypa_read`, `hypa_grep`, `hypa_find`, `hypa_ls`) for normal-sized files and commands. Use `hypa_*` only when output is expected to be large and Hypa's compression is specifically needed (e.g. huge logs, wide directory trees) — do not alternate between the two families for the same kind of operation within one session, to keep tool usage and prompt caching predictable.
+- For subagent supervisor coordination, prefer `subagent_supervisor` (the native pi-subagents channel). The `intercom` tool is only a compatibility fallback for the separate `pi-intercom` package and should not be used unless something explicitly depends on that name.
+
 ## Long-running Tasks and Development Servers
 
 - Do not start long-running processes such as development servers, watchers, or daemons directly from the CLI; use **`pueue`** instead.
