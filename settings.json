@@ -1,8 +1,8 @@
 {
-  "lastChangelogVersion": "0.82.1",
+  "lastChangelogVersion": "0.83.0",
   "theme": "dark",
-  "defaultProvider": "anthropic",
-  "defaultModel": "claude-sonnet-5",
+  "defaultProvider": "opencode-go",
+  "defaultModel": "deepseek-v4-flash",
   "defaultThinkingLevel": "high",
   "enabledModels": [
     "deepseek-v4-pro",
@@ -75,6 +75,7 @@
     "npm:@hypabolic/pi-hypa",
     "npm:pi-web-access",
     "npm:pi-lens",
-    "npm:pi-subagents"
+    "npm:pi-subagents",
+    "npm:pine-of-glass"
   ]
 }
