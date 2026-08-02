@@ -37,6 +37,19 @@
   - Difficulty: low
     - Option: `--model 'opencode-go/deepseek-v4-flash:low'`
     - Use for summarizing or extracting data that is too voluminous to handle in a main session with high/medium models.
+  - GPT vs DeepSeek V4 Flash — 判断か作業かで選ぶ:
+    - **GPT (gpt-5.6-terra) を優先** — 判断型・低トークン・高信頼:
+      - アーキテクチャ/設計判断、トレードオフの決定
+      - 難解バグの根本原因解析
+      - 高信頼が必要なコードレビュー
+      - 未経験領域の探索的判断
+    - **Flash を優先** — 作業型・高トークン・低コスト:
+      - 設計確定後の機械的実装・リファクタ
+      - ファイル横断の大量変更、ボイラープレート生成
+      - ログ/調査の要約、一次パス
+      - lint/テスト修正などの反復ループ(0731 でエージェント性能が大幅強化)
+    - **gpt-5.6-luna クラスのタスクは flash で代替する**(flash 0731 は luna の仕事を十分こなす)
+    - コスト目安(出力 $/M tokens): terra $12 ≫ luna $0.6〜1.2 ≥ flash $0.28。出力トークンが多いタスクほど flash が有利。
   - Specialty:
 
     | Model | Best for |
