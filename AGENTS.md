@@ -85,6 +85,7 @@
 ## Pi Extension Workflow
 
 - Use `rpiv-todo` as the source of truth for multi-step work: define concrete completion criteria, dependencies, and verification commands before implementation.
+- Use `epic-progress` (local extension, integrated with rpiv-todo tasks) when breaking a large goal into subtasks: create an epic task, mark children with `metadata: { epic: <id> }`, and track `status` / `activeForm` / `blockedBy`. The editor widget and `/progress` show progress (done/total, in-progress, blocked) at a glance.
 - Use `pi-subagents` for independent research, implementation, or review work; keep one clear owner per mutable workspace.
 - Use `pi-kanban` to monitor long-running sessions and subagent progress. Start it with `/kanban start` and open it with `/kanban open web` when visual monitoring is useful.
 - Use `pi-plan` (`/plan`) for read-only exploration and structured plans before implementing. Bind the plan file to the session with `bind_plan` so the dashboard can render it.
