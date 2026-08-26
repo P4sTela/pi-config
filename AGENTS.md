@@ -73,10 +73,28 @@
 - For fetching page content or GitHub repositories, use the `fetch_content` tool directly.
   - GitHub URLs are cloned locally for accurate file access, not scraped as HTML.
 
-## Tool Overlap (pi-hypa / pi-subagents)
+## Tool Selection (pi-fff / pi-subagents)
 
-- Prefer the standard `read` / `bash` / `edit` / `write` tools over the `hypa_*` equivalents (`hypa_shell`, `hypa_read`, `hypa_grep`, `hypa_find`, `hypa_ls`) for normal-sized files and commands. Use `hypa_*` only when output is expected to be large and Hypa's compression is specifically needed (e.g. huge logs, wide directory trees) — do not alternate between the two families for the same kind of operation within one session, to keep tool usage and prompt caching predictable.
+- Prefer the standard `read` / `bash` / `edit` / `write` tools for file reading, shell commands, and editing.
+- File search is provided by **pi-fff** (Rust-native, SIMD-accelerated, pre-indexed with frecency ranking):
+  - `fffind` — fuzzy path/file search, git-aware, frecency-ranked. Use it first whenever the user names a concept, feature, or symbol to surface the relevant files in one call. Keep queries to 1-2 terms; use it for paths, not content.
+  - `ffgrep` — SIMD-accelerated content search. Prefer bare identifiers as patterns (literal queries are most efficient); use `path` for include and `exclude` for noise. Use it for content, not paths.
+  - After 1-2 greps, read the top match instead of running more greps.
 - For subagent supervisor coordination, prefer `subagent_supervisor` (the native pi-subagents channel). The `intercom` tool is only a compatibility fallback for the separate `pi-intercom` package and should not be used unless something explicitly depends on that name.
+
+## Pi Extension Workflow
+
+- Use `rpiv-todo` as the source of truth for multi-step work: define concrete completion criteria, dependencies, and verification commands before implementation.
+- Use `pi-subagents` for independent research, implementation, or review work; keep one clear owner per mutable workspace.
+- Use `pi-kanban` to monitor long-running sessions and subagent progress. Start it with `/kanban start` and open it with `/kanban open web` when visual monitoring is useful.
+- Use `pi-plan` (`/plan`) for read-only exploration and structured plans before implementing. Bind the plan file to the session with `bind_plan` so the dashboard can render it.
+- Use `checkpoint-pi` (enabled): it snapshots the full worktree (tracked + untracked) as Git refs at every turn start, creating an automatic "before restore" checkpoint, so you can restore code when a conversation forks and you want to go back.
+- Use `pi-review` (`/review`) for a strict maintainer review of the work before considering it done; add focus text to scope it (`/review focus on <area>`).
+- Use `ask_user_question` whenever requirements are ambiguous and you cannot proceed without a concrete decision — ask up to 4 structured questions with 2-4 options instead of guessing on material decisions.
+- Use `context-mode` when command output, logs, or documentation may be large; summarize or query the data instead of loading it wholesale into the conversation.
+- Use `pi-lens` diagnostics and project tests after edits. Do not consider a task complete while blocking diagnostics or test failures remain.
+- Prefer small, reviewable Git checkpoints for long tasks. Keep unrelated pre-existing changes separate from task commits.
+- Treat third-party extensions as code with full user-level access; review permissions and source before adding new packages. Prefer existing extensions over adding overlapping orchestration or permission layers.
 
 ## Long-running Tasks and Development Servers
 
