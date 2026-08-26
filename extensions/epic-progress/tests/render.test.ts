@@ -19,52 +19,72 @@ function summaryOf(tasks: Task[]) {
 test("buildWidgetRows renders compact per-epic summary", () => {
 	const summary = summaryOf([
 		task({ id: 1, subject: "Add caching layer" }),
-		task({ id: 2, subject: "impl", status: "in_progress", activeForm: "designing cache key", metadata: { epic: 1 } }),
-		task({ id: 3, subject: "integration test", blockedBy: [2], metadata: { epic: 1 } }),
+		task({
+			id: 2,
+			subject: "impl",
+			status: "in_progress",
+			activeForm: "designing cache key",
+			metadata: { epic: 1 },
+		}),
+		task({
+			id: 3,
+			subject: "integration test",
+			blockedBy: [2],
+			metadata: { epic: 1 },
+		}),
 		task({ id: 4, subject: "docs", metadata: { epic: 1 } }),
 	]);
 	const { rows, hiddenEpics, hiddenTasks } = buildWidgetRows(summary, 10);
-	assert.deepEqual(rows.map((r) => r.text), [
-		"Add caching layer (0/3)",
-		"in progress: impl (designing cache key)",
-		"blocked: integration test",
-		"1 pending",
-	]);
+	assert.deepEqual(
+		rows.map((r) => r.text),
+		[
+			"Add caching layer (0/3)",
+			"in progress: impl (designing cache key)",
+			"blocked: integration test",
+			"1 pending",
+		],
+	);
 	assert.equal(hiddenEpics, 0);
 	assert.equal(hiddenTasks, 0);
 });
 
 test("buildWidgetRows caps at budget: epic headers first, surplus hidden", () => {
-const summary = summaryOf([
-task({ id: 1, subject: "Epic A" }),
-task({ id: 2, subject: "a1", metadata: { epic: 1 } }),
-task({ id: 3, subject: "Epic B" }),
-task({ id: 4, subject: "b1", metadata: { epic: 3 } }),
-task({ id: 5, subject: "Epic C" }),
-task({ id: 6, subject: "c1", metadata: { epic: 5 } }),
-]);
-// budget 3 → 3 epic ヘッダのみ (サブ行なし)
-const { rows, hiddenEpics, hiddenTasks } = buildWidgetRows(summary, 3);
-assert.deepEqual(rows.map((r) => r.text), ["Epic A (0/1)", "Epic B (0/1)", "Epic C (0/1)"]);
-assert.equal(hiddenEpics, 0);
-assert.equal(hiddenTasks, 0);
-// budget 2 → 2 epic ヘッダ + 1 epic 隠し (残1子)
-const tight = buildWidgetRows(summary, 2);
-assert.equal(tight.rows.length, 2);
-assert.equal(tight.hiddenEpics, 1);
-assert.equal(tight.hiddenTasks, 1);
+	const summary = summaryOf([
+		task({ id: 1, subject: "Epic A" }),
+		task({ id: 2, subject: "a1", metadata: { epic: 1 } }),
+		task({ id: 3, subject: "Epic B" }),
+		task({ id: 4, subject: "b1", metadata: { epic: 3 } }),
+		task({ id: 5, subject: "Epic C" }),
+		task({ id: 6, subject: "c1", metadata: { epic: 5 } }),
+	]);
+	// budget 3 → 3 epic ヘッダのみ (サブ行なし)
+	const { rows, hiddenEpics, hiddenTasks } = buildWidgetRows(summary, 3);
+	assert.deepEqual(
+		rows.map((r) => r.text),
+		["Epic A (0/1)", "Epic B (0/1)", "Epic C (0/1)"],
+	);
+	assert.equal(hiddenEpics, 0);
+	assert.equal(hiddenTasks, 0);
+	// budget 2 → 2 epic ヘッダ + 1 epic 隠し (残1子)
+	const tight = buildWidgetRows(summary, 2);
+	assert.equal(tight.rows.length, 2);
+	assert.equal(tight.hiddenEpics, 1);
+	assert.equal(tight.hiddenTasks, 1);
 });
 
 test("buildWidgetRows prefers in-progress subline under tight budget", () => {
-const summary = summaryOf([
-task({ id: 1, subject: "Epic A" }),
-task({ id: 2, subject: "a1", status: "in_progress", metadata: { epic: 1 } }),
-task({ id: 3, subject: "a2", metadata: { epic: 1 } }),
-]);
-const { rows, hiddenTasks } = buildWidgetRows(summary, 2);
-assert.equal(rows.length, 2);
-assert.deepEqual(rows.map((r) => r.text), ["Epic A (0/2)", "in progress: a1"]);
-assert.equal(hiddenTasks, 1); // pending の a2 が省略
+	const summary = summaryOf([
+		task({ id: 1, subject: "Epic A" }),
+		task({ id: 2, subject: "a1", status: "in_progress", metadata: { epic: 1 } }),
+		task({ id: 3, subject: "a2", metadata: { epic: 1 } }),
+	]);
+	const { rows, hiddenTasks } = buildWidgetRows(summary, 2);
+	assert.equal(rows.length, 2);
+	assert.deepEqual(
+		rows.map((r) => r.text),
+		["Epic A (0/2)", "in progress: a1"],
+	);
+	assert.equal(hiddenTasks, 1); // pending の a2 が省略
 });
 
 test("buildWidgetRows aggregates uncategorized into one row", () => {
@@ -78,17 +98,28 @@ test("buildWidgetRows aggregates uncategorized into one row", () => {
 });
 
 test("buildProgressText lists children with status and block links", () => {
-const summary = summaryOf([
-task({ id: 1, subject: "Add caching layer" }),
-task({ id: 2, subject: "impl", status: "in_progress", activeForm: "writing tests", metadata: { epic: 1 } }),
-task({ id: 3, subject: "integration test", blockedBy: [2], metadata: { epic: 1 } }),
-]);
-const lines = buildProgressText(summary);
-assert.deepEqual(lines, [
-"Epic #1: Add caching layer (0/2)",
-"  #2 in progress impl  (working on: writing tests)",
-"  #3 blocked     integration test",
-]);
+	const summary = summaryOf([
+		task({ id: 1, subject: "Add caching layer" }),
+		task({
+			id: 2,
+			subject: "impl",
+			status: "in_progress",
+			activeForm: "writing tests",
+			metadata: { epic: 1 },
+		}),
+		task({
+			id: 3,
+			subject: "integration test",
+			blockedBy: [2],
+			metadata: { epic: 1 },
+		}),
+	]);
+	const lines = buildProgressText(summary);
+	assert.deepEqual(lines, [
+		"Epic #1: Add caching layer (0/2)",
+		"  #2 in progress impl  (working on: writing tests)",
+		"  #3 blocked     integration test",
+	]);
 });
 
 test("buildProgressText filters by epicId", () => {
@@ -107,6 +138,8 @@ test("buildProgressText shows uncategorized section and empty message", () => {
 	const empty = buildProgressText(summaryOf([]));
 	assert.deepEqual(empty, ["No tasks yet. Ask the agent to add some!"]);
 
-	const solo = buildProgressText(summaryOf([task({ id: 5, subject: "solo", status: "completed" })]));
+	const solo = buildProgressText(
+		summaryOf([task({ id: 5, subject: "solo", status: "completed" })]),
+	);
 	assert.deepEqual(solo, ["Uncategorized:", "  #5 completed  solo"]);
 });

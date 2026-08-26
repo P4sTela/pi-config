@@ -94,7 +94,11 @@ export function computeEpicSummary(state: TaskState): EpicSummary {
 		const kids = children.get(id)!;
 		const done = kids.filter((k) => k.status === "completed").length;
 		const inProgress = kids.find((k) => k.status === "in_progress");
-		const blocked = kids.filter((k) => (k.status === "pending" || k.status === "in_progress") && isBlocked(k, byId));
+		const blocked = kids.filter(
+			(k) =>
+				(k.status === "pending" || k.status === "in_progress") &&
+				isBlocked(k, byId),
+		);
 		const pending = kids.filter(
 			(k) => k.status === "pending" && !blocked.some((b) => b.id === k.id),
 		);
@@ -110,13 +114,25 @@ export function computeEpicSummary(state: TaskState): EpicSummary {
 	const total = epics.reduce((n, g) => n + g.children.length, 0);
 	const done = epics.reduce((n, g) => n + g.done, 0);
 
-	return { epics, uncategorized: finalUncategorized, orphanChildren, total, done };
+	return {
+		epics,
+		uncategorized: finalUncategorized,
+		orphanChildren,
+		total,
+		done,
+	};
 }
 
 /** ある epic を subject 部分一致で探す (epic 本体と子を subject 検索して id 返却)。 */
-export function findEpicId(summary: EpicSummary, subject: string): number | undefined {
+export function findEpicId(
+	summary: EpicSummary,
+	subject: string,
+): number | undefined {
 	for (const g of summary.epics) {
-		if (g.epic.subject.includes(subject) || g.children.some((c) => c.subject.includes(subject))) {
+		if (
+			g.epic.subject.includes(subject) ||
+			g.children.some((c) => c.subject.includes(subject))
+		) {
 			return g.epic.id;
 		}
 	}

@@ -15,11 +15,20 @@
  * epic の紐付け規約: 子タスクは `metadata: { epic: <親タスク id> }` を持つ。
  */
 
-import type { ExtensionAPI, ExtensionContext, ExtensionUIContext, Theme } from "@earendil-works/pi-coding-agent";
+import type {
+	ExtensionAPI,
+	ExtensionContext,
+	ExtensionUIContext,
+	Theme,
+} from "@earendil-works/pi-coding-agent";
 import { type TUI, truncateToWidth } from "@earendil-works/pi-tui";
 import { isTaskDetails, replayFromBranch, type TaskState } from "./model.ts";
 import { computeEpicSummary, findEpicId } from "./selectors.ts";
-import { buildProgressText, buildWidgetRows, type WidgetRow } from "./render.ts";
+import {
+	buildProgressText,
+	buildWidgetRows,
+	type WidgetRow,
+} from "./render.ts";
 
 const WIDGET_KEY = "epic-progress";
 /** ウィジェットのコンテンツ行予算 (ヘッダ含む)。 */
@@ -37,7 +46,9 @@ let uiCtx: ExtensionUIContext | undefined;
 let tui: TUI | undefined;
 let widgetRegistered = false;
 
-function sessionId(ctx: { sessionManager: { getSessionId(): string } }): string {
+function sessionId(ctx: {
+	sessionManager: { getSessionId(): string };
+}): string {
 	try {
 		return ctx.sessionManager.getSessionId() ?? "";
 	} catch {
@@ -51,7 +62,11 @@ function getState(s: string): TaskState {
 
 function isEmptySummary(state: TaskState): boolean {
 	const summary = computeEpicSummary(state);
-	return summary.epics.length === 0 && summary.uncategorized.length === 0 && summary.orphanChildren.length === 0;
+	return (
+		summary.epics.length === 0 &&
+		summary.uncategorized.length === 0 &&
+		summary.orphanChildren.length === 0
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -60,14 +75,19 @@ function isEmptySummary(state: TaskState): boolean {
 
 function renderWidget(theme: Theme, width: number): string[] {
 	const summary = computeEpicSummary(getState(activeSession));
-	const { rows, hiddenEpics, hiddenTasks } = buildWidgetRows(summary, DEFAULT_WIDGET_LINES - 1);
+	const { rows, hiddenEpics, hiddenTasks } = buildWidgetRows(
+		summary,
+		DEFAULT_WIDGET_LINES - 1,
+	);
 	const truncate = (line: string): string => truncateToWidth(line, width, "…");
 
 	const hasActive = summary.total > summary.done;
 	const headingColor = hasActive ? "accent" : "dim";
 	const headingIcon = hasActive ? "●" : "○";
 	const lines: string[] = [
-		truncate(`${theme.fg(headingColor, headingIcon)} ${theme.fg(headingColor, `Progress (${summary.done}/${summary.total})`)}`),
+		truncate(
+			`${theme.fg(headingColor, headingIcon)} ${theme.fg(headingColor, `Progress (${summary.done}/${summary.total})`)}`,
+		),
 	];
 	for (const r of rows) {
 		lines.push(truncate(renderRow(theme, r)));
@@ -76,7 +96,11 @@ function renderWidget(theme: Theme, width: number): string[] {
 		const parts: string[] = [];
 		if (hiddenEpics > 0) parts.push(`+${hiddenEpics} epics`);
 		if (hiddenTasks > 0) parts.push(`+${hiddenTasks} tasks`);
-		lines.push(truncate(`${theme.fg("dim", "└─")} ${theme.fg("dim", `${parts.join(", ")} more`)}`));
+		lines.push(
+			truncate(
+				`${theme.fg("dim", "└─")} ${theme.fg("dim", `${parts.join(", ")} more`)}`,
+			),
+		);
 	}
 	// 末尾スペーサ (rpiv-todo と同じく最下行がインプットボックスにくっつかないように)
 	lines.push("");
@@ -107,7 +131,8 @@ function updateWidget(): void {
 			(t, factoryTheme) => {
 				tui = t;
 				return {
-					render: (width: number) => renderWidget(uiCtx?.theme ?? factoryTheme, width),
+					render: (width: number) =>
+						renderWidget(uiCtx?.theme ?? factoryTheme, width),
 					invalidate: () => {
 						/* キャッシュなし — 毎 render で uiCtx.theme を読む */
 					},
@@ -147,7 +172,11 @@ export default function (pi: ExtensionAPI): void {
 	});
 
 	// コンパクト / ツリー化: branch が変わるので replay し直す。
-	const replayAndRefresh = async (ctx: Parameters<typeof sessionId>[0] & { sessionManager: { getBranch(): Iterable<unknown> } }) => {
+	const replayAndRefresh = async (
+		ctx: Parameters<typeof sessionId>[0] & {
+			sessionManager: { getBranch(): Iterable<unknown> };
+		},
+	) => {
 		const id = sessionId(ctx);
 		states.set(id, replayFromBranch(ctx.sessionManager.getBranch()));
 		if (id === activeSession) updateWidget();
@@ -161,13 +190,17 @@ export default function (pi: ExtensionAPI): void {
 		const details = (event as { result?: { details?: unknown } }).result?.details;
 		if (!isTaskDetails(details)) return;
 		const id = sessionId(ctx);
-		states.set(id, { tasks: details.tasks.map((t) => ({ ...t })), nextId: details.nextId });
+		states.set(id, {
+			tasks: details.tasks.map((t) => ({ ...t })),
+			nextId: details.nextId,
+		});
 		if (id === activeSession) updateWidget();
 	});
 
 	// /progress — epic 詳細一覧。引数で epic を subject 部分一致フィルタ。
 	pi.registerCommand("progress", {
-		description: "Show epic task progress breakdown (epic = tasks referenced via metadata.epic)",
+		description:
+			"Show epic task progress breakdown (epic = tasks referenced via metadata.epic)",
 		handler: async (args, ctx: ExtensionContext) => {
 			const summary = computeEpicSummary(getState(sessionId(ctx)));
 			const arg = (args ?? "").trim();

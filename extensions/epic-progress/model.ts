@@ -50,7 +50,10 @@ export function isTaskDetails(value: unknown): value is TaskDetails {
 export function replayFromBranch(branch: Iterable<unknown>): TaskState {
 	let result: TaskState = { tasks: [], nextId: EMPTY_STATE.nextId };
 	for (const entry of branch) {
-		const e = entry as { type?: string; message?: { role?: string; toolName?: string; details?: unknown } };
+		const e = entry as {
+			type?: string;
+			message?: { role?: string; toolName?: string; details?: unknown };
+		};
 		if (e?.type !== "message") continue;
 		const msg = e.message;
 		if (msg?.role !== "toolResult" || msg.toolName !== "todo") continue;

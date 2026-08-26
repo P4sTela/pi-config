@@ -49,9 +49,10 @@ function buildById(summary: EpicSummary): Map<number, Task> {
 /** 子タスク 1 行。blockedBy があって未完了なら blocked 表示。 */
 function childLine(t: Task, byId: Map<number, Task>): string {
 	const blocked = t.status !== "completed" && isBlocked(t, byId);
-	const label = blocked ? "blocked" : STATUS_LABEL[t.status] ?? t.status;
+	const label = blocked ? "blocked" : (STATUS_LABEL[t.status] ?? t.status);
 	let line = `#${t.id} ${label.padEnd(11)} ${t.subject}`;
-	if (t.status === "in_progress" && t.activeForm) line += `  (working on: ${t.activeForm})`;
+	if (t.status === "in_progress" && t.activeForm)
+		line += `  (working on: ${t.activeForm})`;
 	if (!blocked) {
 		const blocks = (t.blockedBy ?? []).map((id) => `#${id}`).join(",");
 		if (blocks) line += `  ⛓ ${blocks}`;
@@ -69,32 +70,52 @@ function buildSubUnits(g: EpicGroup): SubUnit[] {
 	if (g.inProgress) {
 		const t = g.inProgress;
 		units.push({
-			row: { text: `in progress: ${t.subject}${t.activeForm ? ` (${t.activeForm})` : ""}`, color: "accent", icon: "●" },
+			row: {
+				text: `in progress: ${t.subject}${t.activeForm ? ` (${t.activeForm})` : ""}`,
+				color: "accent",
+				icon: "●",
+			},
 			tasks: 1,
 		});
 	}
 	for (const b of g.blocked) {
-		units.push({ row: { text: `blocked: ${b.subject}`, color: "warning", icon: "⛓" }, tasks: 1 });
+		units.push({
+			row: { text: `blocked: ${b.subject}`, color: "warning", icon: "⛓" },
+			tasks: 1,
+		});
 	}
 	if (g.pending.length > 0) {
-		units.push({ row: { text: `${g.pending.length} pending`, color: "dim", icon: "·" }, tasks: g.pending.length });
+		units.push({
+			row: { text: `${g.pending.length} pending`, color: "dim", icon: "·" },
+			tasks: g.pending.length,
+		});
 	}
 	return units;
 }
 
-export function buildWidgetRows(summary: EpicSummary, budget: number): WidgetRowsResult {
+export function buildWidgetRows(
+	summary: EpicSummary,
+	budget: number,
+): WidgetRowsResult {
 	const rows: WidgetRow[] = [];
 	let hiddenEpics = 0;
 	let hiddenTasks = 0;
 	if (budget < 1) {
-		return { rows, hiddenEpics: summary.epics.length, hiddenTasks: summary.total - summary.done };
+		return {
+			rows,
+			hiddenEpics: summary.epics.length,
+			hiddenTasks: summary.total - summary.done,
+		};
 	}
 
 	// フェーズ 1: epic ヘッダ (budget まで全件)
 	const shown: EpicGroup[] = [];
 	for (const g of summary.epics) {
 		if (shown.length < budget) {
-			rows.push({ text: `${g.epic.subject} (${g.done}/${g.children.length})`, color: "accent" });
+			rows.push({
+				text: `${g.epic.subject} (${g.done}/${g.children.length})`,
+				color: "accent",
+			});
 			shown.push(g);
 		} else {
 			hiddenEpics++;
@@ -126,7 +147,8 @@ export function buildWidgetRows(summary: EpicSummary, budget: number): WidgetRow
 	}
 
 	// フェーズ 3: 未分類・孤立タスクの集約行
-	const extraTasks = summary.uncategorized.length + summary.orphanChildren.length;
+	const extraTasks =
+		summary.uncategorized.length + summary.orphanChildren.length;
 	if (extraTasks > 0 && rest > 0) {
 		rows.push({ text: `${extraTasks} uncategorized`, color: "dim", icon: "○" });
 	} else if (extraTasks > 0) {
@@ -137,14 +159,19 @@ export function buildWidgetRows(summary: EpicSummary, budget: number): WidgetRow
 }
 
 /** /progress コマンド出力。epicId が指定されていればその epic のみ。 */
-export function buildProgressText(summary: EpicSummary, epicId?: number): string[] {
+export function buildProgressText(
+	summary: EpicSummary,
+	epicId?: number,
+): string[] {
 	const lines: string[] = [];
 	const byId = buildById(summary);
 	let epics = summary.epics;
 	if (epicId !== undefined) epics = epics.filter((g) => g.epic.id === epicId);
 
 	for (const g of epics) {
-		lines.push(`Epic #${g.epic.id}: ${g.epic.subject} (${g.done}/${g.children.length})`);
+		lines.push(
+			`Epic #${g.epic.id}: ${g.epic.subject} (${g.done}/${g.children.length})`,
+		);
 		if (g.epic.activeForm) lines.push(`  · working on: ${g.epic.activeForm}`);
 		for (const c of g.children) {
 			lines.push(`  ${childLine(c, byId)}`);
@@ -155,13 +182,16 @@ export function buildProgressText(summary: EpicSummary, epicId?: number): string
 	if (epicId === undefined) {
 		if (summary.orphanChildren.length > 0) {
 			lines.push("Orphan children (epic not found):");
-			for (const t of summary.orphanChildren) lines.push(`  ${childLine(t, byId)}`);
+			for (const t of summary.orphanChildren)
+				lines.push(`  ${childLine(t, byId)}`);
 			lines.push("");
 		}
 		if (summary.uncategorized.length > 0) {
 			lines.push("Uncategorized:");
 			for (const t of summary.uncategorized) {
-				lines.push(`  #${t.id} ${STATUS_LABEL[t.status] ?? t.status}  ${t.subject}${t.status === "in_progress" && t.activeForm ? ` (${t.activeForm})` : ""}`);
+				lines.push(
+					`  #${t.id} ${STATUS_LABEL[t.status] ?? t.status}  ${t.subject}${t.status === "in_progress" && t.activeForm ? ` (${t.activeForm})` : ""}`,
+				);
 			}
 			lines.push("");
 		}

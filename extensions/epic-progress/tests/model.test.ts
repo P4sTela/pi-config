@@ -1,6 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { EMPTY_STATE, isTaskDetails, replayFromBranch, visibleTasks, type TaskState } from "../model.ts";
+import {
+	EMPTY_STATE,
+	isTaskDetails,
+	replayFromBranch,
+	visibleTasks,
+	type TaskState,
+} from "../model.ts";
 
 test("replayFromBranch returns EMPTY_STATE when branch has no todo results", () => {
 	const branch = [
@@ -51,8 +57,22 @@ test("replayFromBranch picks the LAST matching todo toolResult (last-write-wins)
 
 test("replayFromBranch ignores non-todo toolResults and malformed details", () => {
 	const branch = [
-		{ type: "message", message: { role: "toolResult", toolName: "bash", details: { anything: true } } },
-		{ type: "message", message: { role: "toolResult", toolName: "todo", details: { not: "a details shape" } } },
+		{
+			type: "message",
+			message: {
+				role: "toolResult",
+				toolName: "bash",
+				details: { anything: true },
+			},
+		},
+		{
+			type: "message",
+			message: {
+				role: "toolResult",
+				toolName: "todo",
+				details: { not: "a details shape" },
+			},
+		},
 	];
 	const state = replayFromBranch(branch);
 	assert.deepEqual(state, EMPTY_STATE);
@@ -65,17 +85,28 @@ test("replayFromBranch deep-copies tasks (no aliasing)", () => {
 			message: {
 				role: "toolResult",
 				toolName: "todo",
-				details: { action: "create", params: {}, tasks: [{ id: 1, subject: "s", status: "pending" }], nextId: 2 },
+				details: {
+					action: "create",
+					params: {},
+					tasks: [{ id: 1, subject: "s", status: "pending" }],
+					nextId: 2,
+				},
 			},
 		},
 	];
 	const state = replayFromBranch(branch);
 	state.tasks[0].status = "completed";
-	assert.equal((branch[0] as { message: { details: { tasks: Array<{ status: string }> } } }).message.details.tasks[0].status, "pending");
+	assert.equal(
+		(branch[0] as { message: { details: { tasks: Array<{ status: string }> } } })
+			.message.details.tasks[0].status,
+		"pending",
+	);
 });
 
 test("isTaskDetails validates the envelope shape", () => {
-	assert.ok(isTaskDetails({ action: "create", params: {}, tasks: [], nextId: 1 }));
+	assert.ok(
+		isTaskDetails({ action: "create", params: {}, tasks: [], nextId: 1 }),
+	);
 	assert.ok(!isTaskDetails(null));
 	assert.ok(!isTaskDetails({ tasks: [] }));
 	assert.ok(!isTaskDetails({ tasks: "nope", nextId: 1 }));
@@ -92,5 +123,8 @@ test("visibleTasks excludes deleted tombstones", () => {
 		],
 	};
 	const visible = visibleTasks(state);
-	assert.deepEqual(visible.map((t) => t.id), [1, 3]);
+	assert.deepEqual(
+		visible.map((t) => t.id),
+		[1, 3],
+	);
 });
