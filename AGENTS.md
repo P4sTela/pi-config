@@ -69,7 +69,7 @@
 
 ## Sandbox (scratch / tmp cleanup)
 
-- Scratch files and build artifacts belong under `<project>/.pi/work/`. `rm -rf` confined to that directory is allowed silently by the permission gate (`extensions/permission-gate.ts`), including headless runs.
+- Scratch files and build artifacts belong under `<project>/.pi/work/`. `rm -rf` confined to that directory is allowed silently by the permission gate (`extensions/permission-gate.ts`), including headless runs. To relocate it for a run, set `PI_SANDBOX_DIR` (e.g. `PI_SANDBOX_DIR=scratch pi …`) — the gate then allows `rm -rf` under `<project>/$PI_SANDBOX_DIR`.
 - Do not clean shared temporary areas (`/tmp`, `$TMPDIR`, system dirs): the gate still confirms/blocks there so temp files of other processes or users are not nuked by glob overreach.
 - Add `.pi/work/` to the project `.gitignore`.
 

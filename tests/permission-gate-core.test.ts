@@ -120,3 +120,115 @@ test("RM_RECURSIVE_FORCE_PATTERN matches what the old gate flagged", () => {
   expect(RM_RECURSIVE_FORCE_PATTERN.test("rm -d x")).toBe(false);
   expect(RM_RECURSIVE_FORCE_PATTERN.test("npm clean x")).toBe(false);
 });
+
+// --- hardened (fs) checks --------------------------------------------------
+import {
+  mkdtempSync,
+  mkdirSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  existsSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import * as path from "node:path";
+import {
+  isSandboxSafeHardened,
+  realCandidates,
+  realTargetPath,
+  sandboxDirName,
+} from "../extensions/permission-gate-core";
+
+const fixture = (() => {
+  const root = mkdtempSync(path.join(tmpdir(), "pg-hardened-"));
+  const project = path.join(root, "repo");
+  const sandbox = path.join(project, ".pi", "work");
+  mkdirSync(path.join(sandbox, "sub"), { recursive: true });
+  mkdirSync(path.join(sandbox, "keep"), { recursive: true });
+  // symlink INSIDE the sandbox pointing outside it
+  symlinkSync(root, path.join(sandbox, "escape"));
+  return { root, project, sandbox };
+})();
+
+// NOTE: tests only exercise the resolver, never an actual `rm` on the fixture.
+
+test("hardened: real dir inside the sandbox is allowed", () => {
+  expect(isSandboxSafeHardened("rm -rf .pi/work/sub/*", fixture.project)).toBe(true);
+  expect(isSandboxSafeHardened("rm -rf .pi/work/keep", fixture.project)).toBe(true);
+  expect(isSandboxSafeHardened("rm -rf .pi/work/*", fixture.project)).toBe(true);
+  expect(isSandboxSafeHardened("rm -rf .pi/work", fixture.project)).toBe(true);
+});
+
+test("hardened: symlink escape is NOT allowed (trailing slash / glob through link)", () => {
+  // `rm -rf .pi/work/escape/` follows the link and deletes the target's contents
+  expect(
+    isSandboxSafeHardened("rm -rf .pi/work/escape/", fixture.project),
+  ).toBe(false);
+  // glob through the link would resolve outside the sandbox
+  expect(
+    isSandboxSafeHardened("rm -rf .pi/work/escape/*", fixture.project),
+  ).toBe(false);
+  // removing the LINK itself (no trailing slash) is safe and allowed
+  expect(isSandboxSafeHardened("rm -rf .pi/work/escape", fixture.project)).toBe(
+    true,
+  );
+});
+
+test("hardened: keeps denying plain /tmp targets and dotdot escapes", () => {
+  expect(isSandboxSafeHardened("rm -rf /tmp/x", fixture.project)).toBe(false);
+  expect(isSandboxSafeHardened("rm -rf .pi/work/escape/../../etc", fixture.project)).toBe(false);
+  expect(isSandboxSafeHardened("rm -rf ../etc", fixture.project)).toBe(false);
+});
+
+test("realTargetPath resolves the deepest existing ancestor (realpath-normalized)", () => {
+  const inside = path.join(fixture.sandbox, "sub");
+  // macOS maps /var -> /private/var, so the resolved value is realpath-based
+  expect(realTargetPath(path.join(inside, "ghost"))).toBe(
+    path.join(realpathSync(inside), "ghost"),
+  );
+  expect(realTargetPath(fixture.sandbox)).toBe(
+    realpathSync(fixture.sandbox),
+  );
+  expect(
+    realTargetPath(path.join(fixture.project, ".pi", "zzz")),
+  ).toBe(path.join(realpathSync(path.join(fixture.project, ".pi")), "zzz"));
+});
+
+test("realCandidates includes realpath forms of existing candidates", () => {
+  const cands = realCandidates(fixture.project);
+  expect(cands).toContain(path.join(fixture.project, ".pi", "work"));
+  expect(cands).toContain(fixture.sandbox); // realpath of itself
+});
+
+test("sandboxDirName honors PI_SANDBOX_DIR", () => {
+  const prev = process.env.PI_SANDBOX_DIR;
+  process.env.PI_SANDBOX_DIR = "scratch";
+  try {
+    expect(sandboxDirName()).toBe("scratch");
+  } finally {
+    if (prev === undefined) delete process.env.PI_SANDBOX_DIR;
+    else process.env.PI_SANDBOX_DIR = prev;
+  }
+  expect(sandboxDirName()).toBe(".pi/work");
+  if (!existsSync(fixture.root)) throw new Error("fixture missing");
+});
+
+test("hardened: sandbox dir override is honored by the fs check", () => {
+  const altSandbox = path.join(fixture.project, "scratch");
+  mkdirSync(altSandbox, { recursive: true });
+  expect(
+    isSandboxSafeHardened("rm -rf scratch/*", fixture.project, "scratch"),
+  ).toBe(true);
+  expect(
+    isSandboxSafeHardened("rm -rf .pi/work/*", fixture.project, "scratch"),
+  ).toBe(false);
+});
+
+// fixture cleanup at exit (best-effort)
+process.on("exit", () => {
+  try {
+    rmSync(fixture.root, { recursive: true, force: true });
+  } catch {
+    /* ignore */
+  }
+});

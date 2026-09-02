@@ -1,20 +1,37 @@
 /**
- * Pure helpers for the permission gate's sandbox bypass.
+ * Permission gate helpers — sandbox rules for the recursive/forced `rm` bypass.
  *
  * No pi imports — this module is deliberately standalone so the logic can be
  * unit-tested without a pi runtime (e.g. `bun run` this file's tests).
  *
  * The sandbox is a dedicated scratch directory per project:
- *   <projectRoot>/.pi/work/
+ *   <projectRoot>/.pi/work/  (override: PI_SANDBOX_DIR env var)
  * Recursive/forced `rm` whose targets all resolve inside a sandbox is scratch
  * cleanup and is allowed without prompting (also in headless runs). Everything
  * else keeps the original gate behavior (confirm in TUI, block headless).
+ *
+ * Sandbox candidates are computed by walking from cwd toward the filesystem
+ * root — every `<ancestor>/.pi/work` is a valid sandbox, so cleanup typed from
+ * a nested working directory resolves correctly. `isSandboxSafeHardened`
+ * additionally resolves symlinks (fs.realpath) so `rm -rf .pi/work/link/`
+ * cannot follow a link out of the sandbox.
+ *
+ * This is a cooperative guard, not a security boundary: deletion paths that
+ * bypass `rm` (e.g. `find -delete`, shutil.rmtree) are gated by the gate's
+ * pattern list, never silently allowed.
  */
+import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
-/** Directory name of the per-project scratch sandbox. */
+/** Directory name of the per-project scratch sandbox (env PI_SANDBOX_DIR overrides). */
 export const SANDBOX_DIR_NAME = ".pi/work";
+
+/** Effective sandbox directory name for this run (env override wins). */
+export function sandboxDirName(): string {
+  const v = process.env.PI_SANDBOX_DIR?.trim();
+  return v && v.length > 0 ? v : SANDBOX_DIR_NAME;
+}
 
 /** `rm` must carry a recursive (-r/-R) or forced (-f) flag to be gated at all. */
 export const RM_RECURSIVE_FORCE_PATTERN =
@@ -244,6 +261,92 @@ export function isSandboxSafe(
   if (targets.length === 0) return false;
   const candidates = sandboxCandidates(cwd, sandboxDir);
   return targets.every((t) => targetIsInside(t, cwd, candidates));
+}
+
+/**
+ * Real path of the deepest EXISTING ancestor of `p`, with the not-yet-existing
+ * remainder re-appended. A symlink in the existing part is resolved, so an
+ * `rm` that would follow a link out of the sandbox is caught.
+ * Returns undefined when even the filesystem root cannot be resolved.
+ */
+export function realTargetPath(p: string): string | undefined {
+  let cur = path.resolve(p);
+  const tail: string[] = [];
+  for (;;) {
+    try {
+      const real = fs.realpathSync(cur);
+      return tail.length === 0 ? real : path.join(real, ...tail);
+    } catch {
+      const parent = path.dirname(cur);
+      if (parent === cur) return undefined;
+      tail.unshift(path.basename(cur));
+      cur = parent;
+    }
+  }
+}
+
+/**
+ * Lexical sandbox candidates plus the realpath of the ones that already exist
+ * (so a project reached through a symlinked path still matches its own
+ * <project>/.pi/work).
+ */
+export function realCandidates(
+  cwd: string,
+  sandboxDir: string = SANDBOX_DIR_NAME,
+): string[] {
+  const lexical = sandboxCandidates(cwd, sandboxDir);
+  const out = [...lexical];
+  for (const c of lexical) {
+    try {
+      out.push(fs.realpathSync(c));
+    } catch {
+      // not created yet — lexical form stays
+    }
+  }
+  return out;
+}
+
+/**
+ * Fs-hardened sandbox check: the pure containment test plus symlink-safe
+ * realpath verification of every target. This is what the gate calls.
+ */
+export function isSandboxSafeHardened(
+  command: string,
+  cwd: string,
+  sandboxDir: string = SANDBOX_DIR_NAME,
+): boolean {
+  if (!isSandboxSafe(command, cwd, sandboxDir)) return false;
+  const targets = extractRmTargets(command);
+  const cands = realCandidates(cwd, sandboxDir);
+  for (const t of targets) {
+    const head = globHead(t);
+    if (head === undefined) return false; // bare glob
+    if (hasDotDotAfterGlob(t)) return false;
+    const resolved = path.resolve(cwd, expandTilde(head));
+    const hasGlob = firstGlobIndex(t) >= 0;
+    let real: string | undefined;
+    if (!hasGlob && !/[\\/]$/.test(t)) {
+      // Plain target, no trailing separator: when the final component is a
+      // symlink, `rm` removes the LINK itself (safe) — resolve the parent.
+      // With a trailing slash or a glob, `rm` follows the link, so the link
+      // target must stay inside the sandbox.
+      let isLink = false;
+      try {
+        isLink = fs.lstatSync(resolved).isSymbolicLink();
+      } catch {
+        // not present yet — parent resolution below handles it
+      }
+      real = isLink
+        ? realTargetPath(path.dirname(resolved))
+        : realTargetPath(resolved);
+    } else {
+      real = realTargetPath(resolved);
+    }
+    if (real === undefined || !containedInCandidates(real, cands)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**

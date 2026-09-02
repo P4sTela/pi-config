@@ -4,7 +4,8 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import {
   RM_RECURSIVE_FORCE_PATTERN,
-  isSandboxSafe,
+  isSandboxSafeHardened,
+  sandboxDirName,
 } from "./permission-gate-core";
 
 /**
@@ -18,8 +19,14 @@ import {
  * In non-interactive contexts (no UI), risky calls are blocked by default.
  *
  * Sandbox bypass: recursive/forced `rm` whose targets all resolve inside a
- * project scratch dir (`<project>/.pi/work`) is scratch cleanup — allowed
- * silently, also in headless runs. See permission-gate-core.ts.
+ * project scratch dir (`<project>/.pi/work`, or $PI_SANDBOX_DIR) is scratch
+ * cleanup — allowed silently, also in headless runs. The bypass is limited to
+ * commands where rm -r/-f is the SOLE dangerous pattern (so `sudo rm -rf …`
+ * still gates) and uses realpath-resolved containment, so a symlink inside the
+ * sandbox cannot smuggle deletion outside it. See permission-gate-core.ts.
+ *
+ * This is a cooperative guard, not a security boundary — deletion via other
+ * tools (find -delete, shutil.rmtree, …) is covered by the pattern list below.
  */
 
 // --- Dangerous bash command patterns ---------------------------------------
@@ -28,6 +35,8 @@ const DANGEROUS_BASH: { pattern: RegExp; reason: string }[] = [
     pattern: RM_RECURSIVE_FORCE_PATTERN,
     reason: "recursive/forced file deletion (rm -rf)",
   },
+  { pattern: /\bfind\b.*\s-delete\b/, reason: "find -delete (recursive deletion)" },
+  { pattern: /\brmtree\s*\(/, reason: "python shutil.rmtree (recursive deletion)" },
   { pattern: /\bsudo\b/, reason: "elevated privileges (sudo)" },
   { pattern: /\bchmod\s+-R\b/, reason: "recursive permission change" },
   { pattern: /\bchown\s+-R\b/, reason: "recursive ownership change" },
@@ -117,7 +126,11 @@ export default function (pi: ExtensionAPI) {
       if (
         RM_RECURSIVE_FORCE_PATTERN.test(command) &&
         !hasOtherDangerousBash(command) &&
-        isSandboxSafe(command, ctx.cwd ?? process.cwd())
+        isSandboxSafeHardened(
+          command,
+          ctx.cwd ?? process.cwd(),
+          sandboxDirName(),
+        )
       ) {
         return;
       }
