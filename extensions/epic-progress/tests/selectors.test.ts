@@ -179,3 +179,19 @@ test("deleted children are excluded from counts", () => {
 	assert.equal(group.children.length, 1);
 	assert.equal(group.done, 1);
 });
+
+test("visibleCount/doneCount cover all visible tasks (fallback numbers)", () => {
+	const s = state([
+		task({ id: 1, subject: "Epic A" }),
+		task({ id: 2, subject: "c1", status: "completed", metadata: { epic: 1 } }),
+		task({ id: 3, subject: "flat done", status: "completed" }),
+		task({ id: 4, subject: "flat todo" }),
+		task({ id: 5, subject: "gone", status: "deleted" }),
+	]);
+	const summary = computeEpicSummary(s);
+	assert.equal(summary.visibleCount, 4); // deleted は除外
+	assert.equal(summary.doneCount, 2);
+	// epic の子のみの進捗とは別物であること
+	assert.equal(summary.total, 1);
+	assert.equal(summary.done, 1);
+});

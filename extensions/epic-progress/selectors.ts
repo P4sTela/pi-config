@@ -50,6 +50,10 @@ export interface EpicSummary {
 	/** 進捗合計 (epic の子のみ対象)。 */
 	total: number;
 	done: number;
+	/** 全可視タスク数 (epic 子・未分類・孤立を含む)。epic なしフラットリストのフォールバック表示用。 */
+	visibleCount: number;
+	/** 全可視タスクのうち completed 数。 */
+	doneCount: number;
 }
 
 const STATUS_RANK: Record<Task["status"], number> = {
@@ -120,6 +124,8 @@ export function computeEpicSummary(state: TaskState): EpicSummary {
 		orphanChildren,
 		total,
 		done,
+		visibleCount: tasks.length,
+		doneCount: tasks.filter((t) => t.status === "completed").length,
 	};
 }
 

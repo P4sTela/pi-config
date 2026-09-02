@@ -2,6 +2,10 @@ import {
   isToolCallEventType,
   type ExtensionAPI,
 } from "@earendil-works/pi-coding-agent";
+import {
+  RM_RECURSIVE_FORCE_PATTERN,
+  isSandboxSafe,
+} from "./permission-gate-core";
 
 /**
  * Permission gate
@@ -12,23 +16,51 @@ import {
  *
  * If the user declines, the tool call is blocked and the model is told why.
  * In non-interactive contexts (no UI), risky calls are blocked by default.
+ *
+ * Sandbox bypass: recursive/forced `rm` whose targets all resolve inside a
+ * project scratch dir (`<project>/.pi/work`) is scratch cleanup — allowed
+ * silently, also in headless runs. See permission-gate-core.ts.
  */
 
 // --- Dangerous bash command patterns ---------------------------------------
 const DANGEROUS_BASH: { pattern: RegExp; reason: string }[] = [
-  { pattern: /\brm\s+(-[a-zA-Z]*\s+)*-?[a-zA-Z]*[rf]/, reason: "recursive/forced file deletion (rm -rf)" },
+  {
+    pattern: RM_RECURSIVE_FORCE_PATTERN,
+    reason: "recursive/forced file deletion (rm -rf)",
+  },
   { pattern: /\bsudo\b/, reason: "elevated privileges (sudo)" },
   { pattern: /\bchmod\s+-R\b/, reason: "recursive permission change" },
   { pattern: /\bchown\s+-R\b/, reason: "recursive ownership change" },
   { pattern: /\b(mkfs|fdisk|dd)\b/, reason: "low-level disk operation" },
-  { pattern: />\s*\/dev\/(sd|nvme|disk)/, reason: "writing to a raw disk device" },
-  { pattern: /\bgit\s+push\s+.*--force\b|\bgit\s+push\s+.*-f\b/, reason: "force push" },
-  { pattern: /\bgit\s+reset\s+--hard\b/, reason: "hard reset (discards changes)" },
-  { pattern: /\bgit\s+clean\s+-[a-zA-Z]*f/, reason: "git clean (deletes untracked files)" },
-  { pattern: /\b(shutdown|reboot|halt|poweroff)\b/, reason: "system power state change" },
+  {
+    pattern: />\s*\/dev\/(sd|nvme|disk)/,
+    reason: "writing to a raw disk device",
+  },
+  {
+    pattern: /\bgit\s+push\s+.*--force\b|\bgit\s+push\s+.*-f\b/,
+    reason: "force push",
+  },
+  {
+    pattern: /\bgit\s+reset\s+--hard\b/,
+    reason: "hard reset (discards changes)",
+  },
+  {
+    pattern: /\bgit\s+clean\s+-[a-zA-Z]*f/,
+    reason: "git clean (deletes untracked files)",
+  },
+  {
+    pattern: /\b(shutdown|reboot|halt|poweroff)\b/,
+    reason: "system power state change",
+  },
   { pattern: /:\(\)\s*\{.*\|.*&\s*\}\s*;/, reason: "fork bomb" },
-  { pattern: /\bcurl\b.*\|\s*(sudo\s+)?(sh|bash)\b/, reason: "piping a remote script into a shell" },
-  { pattern: /\bwget\b.*\|\s*(sudo\s+)?(sh|bash)\b/, reason: "piping a remote script into a shell" },
+  {
+    pattern: /\bcurl\b.*\|\s*(sudo\s+)?(sh|bash)\b/,
+    reason: "piping a remote script into a shell",
+  },
+  {
+    pattern: /\bwget\b.*\|\s*(sudo\s+)?(sh|bash)\b/,
+    reason: "piping a remote script into a shell",
+  },
   { pattern: /\bnpm\s+publish\b/, reason: "publishing an npm package" },
 ];
 
@@ -40,7 +72,10 @@ const PROTECTED_PATHS: { pattern: RegExp; reason: string }[] = [
   { pattern: /(^|\/)\.ssh\//, reason: "SSH directory" },
   { pattern: /(^|\/)\.aws\/credentials/, reason: "AWS credentials" },
   { pattern: /(^|\/)\.npmrc$/, reason: "npm credentials" },
-  { pattern: /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$/, reason: "dependency lockfile" },
+  {
+    pattern: /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$/,
+    reason: "dependency lockfile",
+  },
 ];
 
 function matchBash(command: string) {
@@ -48,6 +83,18 @@ function matchBash(command: string) {
     if (pattern.test(command)) return reason;
   }
   return undefined;
+}
+
+/**
+ * True when any dangerous pattern OTHER than rm -r/-f matches the command
+ * (e.g. `sudo rm -rf .pi/work/*`). The sandbox bypass must never let those
+ * ride through on the rm allowance.
+ */
+function hasOtherDangerousBash(command: string) {
+  return DANGEROUS_BASH.some(
+    ({ pattern }) =>
+      pattern !== RM_RECURSIVE_FORCE_PATTERN && pattern.test(command),
+  );
 }
 
 function matchPath(path: string) {
@@ -63,8 +110,18 @@ export default function (pi: ExtensionAPI) {
     let detail = "";
 
     if (isToolCallEventType("bash", event)) {
-      reason = matchBash(event.input.command ?? "");
-      detail = event.input.command ?? "";
+      const command = event.input.command ?? "";
+      detail = command;
+      // Scratch cleanup inside <project>/.pi/work is always safe — bypass the
+      // gate, but only when rm -r/-f is the sole dangerous pattern in play.
+      if (
+        RM_RECURSIVE_FORCE_PATTERN.test(command) &&
+        !hasOtherDangerousBash(command) &&
+        isSandboxSafe(command, ctx.cwd ?? process.cwd())
+      ) {
+        return;
+      }
+      reason = matchBash(command);
     } else if (isToolCallEventType("write", event)) {
       reason = matchPath(event.input.path ?? "");
       detail = event.input.path ?? "";

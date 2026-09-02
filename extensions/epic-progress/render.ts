@@ -108,6 +108,28 @@ export function buildWidgetRows(
 		};
 	}
 
+	// フォールバック: epic が無いフラットリスト → 全体を 1 行に集約。
+	// (ヘッダの Progress (done/total) は index.ts 側で visibleCount/doneCount
+	// を使うので、ここではタスク数と進行中タスクの行のみ生成する)
+	if (summary.epics.length === 0 && summary.visibleCount > 0) {
+		rows.push({
+			text: `${summary.visibleCount} tasks (no epics)`,
+			color: "dim",
+			icon: "○",
+		});
+		const inProgress = [...summary.uncategorized, ...summary.orphanChildren].find(
+			(t) => t.status === "in_progress",
+		);
+		if (inProgress && budget >= 2) {
+			rows.push({
+				text: `in progress: ${inProgress.subject}${inProgress.activeForm ? ` (${inProgress.activeForm})` : ""}`,
+				color: "accent",
+				icon: "●",
+			});
+		}
+		return { rows, hiddenEpics: 0, hiddenTasks: 0 };
+	}
+
 	// フェーズ 1: epic ヘッダ (budget まで全件)
 	const shown: EpicGroup[] = [];
 	for (const g of summary.epics) {

@@ -12,7 +12,7 @@ pi extension — 「大きめのタスク → 細分化 → 実行」の AI 駆�
 
 ウィジェット例:
 
-```
+```text
 ● Progress (1/5)
 ▣ Add caching layer (1/4)
 ├─ ● in progress: impl (designing cache key)
@@ -20,6 +20,13 @@ pi extension — 「大きめのタスク → 細分化 → 実行」の AI 駆�
 └─ 1 pending
 ▣ Refactor CLI (0/1)
 ○ 1 uncategorized
+```
+
+epic が 0 件のフラットリストでは全体進捗にフォールバック:
+
+```text
+● Progress (40/40)
+○ 40 tasks (no epics)
 ```
 
 ## タスクモデル (rpiv-todo と統合)

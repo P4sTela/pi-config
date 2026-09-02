@@ -81,7 +81,11 @@ function renderWidget(theme: Theme, width: number): string[] {
 	);
 	const truncate = (line: string): string => truncateToWidth(line, width, "…");
 
-	const hasActive = summary.total > summary.done;
+	// epic あり: epic 子のみの進捗。epic なしフラットリスト: 全体進捗でフォールバック。
+	const hasEpics = summary.epics.length > 0;
+	const total = hasEpics ? summary.total : summary.visibleCount;
+	const done = hasEpics ? summary.done : summary.doneCount;
+	const hasActive = done < total;
 	const headingColor = hasActive ? "accent" : "dim";
 	const headingIcon = hasActive ? "●" : "○";
 	const lines: string[] = [

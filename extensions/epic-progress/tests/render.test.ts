@@ -94,7 +94,7 @@ test("buildWidgetRows aggregates uncategorized into one row", () => {
 	]);
 	const { rows } = buildWidgetRows(summary, 5);
 	assert.equal(rows.length, 1);
-	assert.match(rows[0].text, /2 uncategorized/);
+	assert.match(rows[0].text, /2 tasks \(no epics\)/);
 });
 
 test("buildProgressText lists children with status and block links", () => {
@@ -142,4 +142,40 @@ test("buildProgressText shows uncategorized section and empty message", () => {
 		summaryOf([task({ id: 5, subject: "solo", status: "completed" })]),
 	);
 	assert.deepEqual(solo, ["Uncategorized:", "  #5 completed  solo"]);
+});
+
+test("buildWidgetRows falls back to a flat summary when there are no epics", () => {
+	const summary = summaryOf([
+		task({ id: 1, subject: "preflight", status: "completed" }),
+		task({
+			id: 2,
+			subject: "pilot run",
+			status: "in_progress",
+			activeForm: "running 3 iterations",
+		}),
+		task({ id: 3, subject: "docs" }),
+	]);
+	const { rows, hiddenEpics, hiddenTasks } = buildWidgetRows(summary, 10);
+	assert.deepEqual(
+		rows.map((r) => r.text),
+		["3 tasks (no epics)", "in progress: pilot run (running 3 iterations)"],
+	);
+	assert.equal(hiddenEpics, 0);
+	assert.equal(hiddenTasks, 0);
+});
+
+test("buildWidgetRows flat fallback fits one-line budget (no in-progress row)", () => {
+	const summary = summaryOf([
+		task({ id: 1, subject: "flat", status: "completed" }),
+	]);
+	const { rows } = buildWidgetRows(summary, 1);
+	assert.deepEqual(
+		rows.map((r) => r.text),
+		["1 tasks (no epics)"],
+	);
+});
+
+test("buildWidgetRows empty summary stays empty (no fallback row)", () => {
+	const { rows } = buildWidgetRows(summaryOf([]), 10);
+	assert.deepEqual(rows, []);
 });

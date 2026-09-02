@@ -67,6 +67,12 @@
 - When a needed tool is missing or you must work outside an activated project, use `nix-shell` / `nix develop` (e.g. `nix-shell -p <pkg>` or `nix develop` for a flake) instead of installing packages globally.
 - If a command fails with "command not found", first check whether the project's direnv environment is active before assuming the tool is absent.
 
+## Sandbox (scratch / tmp cleanup)
+
+- Scratch files and build artifacts belong under `<project>/.pi/work/`. `rm -rf` confined to that directory is allowed silently by the permission gate (`extensions/permission-gate.ts`), including headless runs.
+- Do not clean shared temporary areas (`/tmp`, `$TMPDIR`, system dirs): the gate still confirms/blocks there so temp files of other processes or users are not nuked by glob overreach.
+- Add `.pi/work/` to the project `.gitignore`.
+
 ## Web Search and Fetch
 
 - For web search, use the `web_search` tool directly.
@@ -85,7 +91,7 @@
 ## Pi Extension Workflow
 
 - Use `rpiv-todo` as the source of truth for multi-step work: define concrete completion criteria, dependencies, and verification commands before implementation.
-- Use `epic-progress` (local extension, integrated with rpiv-todo tasks) when breaking a large goal into subtasks: create an epic task, mark children with `metadata: { epic: <id> }`, and track `status` / `activeForm` / `blockedBy`. The editor widget and `/progress` show progress (done/total, in-progress, blocked) at a glance.
+- Use `epic-progress` (local extension, integrated with rpiv-todo tasks) when breaking a large goal into subtasks: **create an epic task first, then mark every child with `metadata: { epic: <id> }`**. Tasks created without `metadata.epic` are not counted by the board — they only appear as flat "uncategorized" and the widget falls back to overall progress. This applies to delegated agents too: tell them to attach the epic link when creating tasks. Track `status` / `activeForm` / `blockedBy`; the editor widget and `/progress` show progress (done/total, in-progress, blocked) at a glance.
 - Use `pi-subagents` for independent research, implementation, or review work; keep one clear owner per mutable workspace.
 - Use `pi-plan` (`/plan`) for read-only exploration and structured plans before implementing. Bind the plan file to the session with `bind_plan` so the dashboard can render it.
 - Use `checkpoint-pi` (enabled): it snapshots the full worktree (tracked + untracked) as Git refs at every turn start, creating an automatic "before restore" checkpoint, so you can restore code when a conversation forks and you want to go back.
