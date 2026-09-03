@@ -35,8 +35,14 @@ const DANGEROUS_BASH: { pattern: RegExp; reason: string }[] = [
     pattern: RM_RECURSIVE_FORCE_PATTERN,
     reason: "recursive/forced file deletion (rm -rf)",
   },
-  { pattern: /\bfind\b.*\s-delete\b/, reason: "find -delete (recursive deletion)" },
-  { pattern: /\brmtree\s*\(/, reason: "python shutil.rmtree (recursive deletion)" },
+  {
+    pattern: /\bfind\b.*\s-delete\b/,
+    reason: "find -delete (recursive deletion)",
+  },
+  {
+    pattern: /\brmtree\s*\(/,
+    reason: "python shutil.rmtree (recursive deletion)",
+  },
   { pattern: /\bsudo\b/, reason: "elevated privileges (sudo)" },
   { pattern: /\bchmod\s+-R\b/, reason: "recursive permission change" },
   { pattern: /\bchown\s+-R\b/, reason: "recursive ownership change" },

@@ -153,9 +153,15 @@ const fixture = (() => {
 // NOTE: tests only exercise the resolver, never an actual `rm` on the fixture.
 
 test("hardened: real dir inside the sandbox is allowed", () => {
-  expect(isSandboxSafeHardened("rm -rf .pi/work/sub/*", fixture.project)).toBe(true);
-  expect(isSandboxSafeHardened("rm -rf .pi/work/keep", fixture.project)).toBe(true);
-  expect(isSandboxSafeHardened("rm -rf .pi/work/*", fixture.project)).toBe(true);
+  expect(isSandboxSafeHardened("rm -rf .pi/work/sub/*", fixture.project)).toBe(
+    true,
+  );
+  expect(isSandboxSafeHardened("rm -rf .pi/work/keep", fixture.project)).toBe(
+    true,
+  );
+  expect(isSandboxSafeHardened("rm -rf .pi/work/*", fixture.project)).toBe(
+    true,
+  );
   expect(isSandboxSafeHardened("rm -rf .pi/work", fixture.project)).toBe(true);
 });
 
@@ -176,7 +182,9 @@ test("hardened: symlink escape is NOT allowed (trailing slash / glob through lin
 
 test("hardened: keeps denying plain /tmp targets and dotdot escapes", () => {
   expect(isSandboxSafeHardened("rm -rf /tmp/x", fixture.project)).toBe(false);
-  expect(isSandboxSafeHardened("rm -rf .pi/work/escape/../../etc", fixture.project)).toBe(false);
+  expect(
+    isSandboxSafeHardened("rm -rf .pi/work/escape/../../etc", fixture.project),
+  ).toBe(false);
   expect(isSandboxSafeHardened("rm -rf ../etc", fixture.project)).toBe(false);
 });
 
@@ -186,12 +194,10 @@ test("realTargetPath resolves the deepest existing ancestor (realpath-normalized
   expect(realTargetPath(path.join(inside, "ghost"))).toBe(
     path.join(realpathSync(inside), "ghost"),
   );
-  expect(realTargetPath(fixture.sandbox)).toBe(
-    realpathSync(fixture.sandbox),
+  expect(realTargetPath(fixture.sandbox)).toBe(realpathSync(fixture.sandbox));
+  expect(realTargetPath(path.join(fixture.project, ".pi", "zzz"))).toBe(
+    path.join(realpathSync(path.join(fixture.project, ".pi")), "zzz"),
   );
-  expect(
-    realTargetPath(path.join(fixture.project, ".pi", "zzz")),
-  ).toBe(path.join(realpathSync(path.join(fixture.project, ".pi")), "zzz"));
 });
 
 test("realCandidates includes realpath forms of existing candidates", () => {
