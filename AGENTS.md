@@ -26,37 +26,15 @@
   - Bad example: When encountering a deep-rooted error, trying to solve it yourself without launching a debugging agent.
 - How to call an agent: `pi --model <provider/model:effort> --fallback-models <provider/model:effort>,... -p '<instructions>'` (left-priority fallback)
   - When a delegated task needs a specific skill, specify it in the prompt: `pi ... -p '/skill:<skill-name> <instructions>'`
-- Default model: `openai-codex/gpt-5.6-terra:high`
-- Model selection:
-  - Difficulty: high
-    - Option: `--model 'openai-codex/gpt-5.6-terra:high'`
-    - Use for design, difficult debugging, and code reviews requiring high confidence.
-  - Difficulty: medium
-    - Option: `--model 'opencode-go/deepseek-v4-pro:medium'`
-    - Use for general coding tasks such as implementation from an existing design.
-  - Difficulty: low
-    - Option: `--model 'opencode-go/deepseek-v4-flash:low'`
-    - Use for summarizing or extracting data that is too voluminous to handle in a main session with high/medium models.
-  - GPT vs DeepSeek V4 Flash — 判断か作業かで選ぶ:
-    - **GPT (gpt-5.6-terra) を優先** — 判断型・低トークン・高信頼:
-      - アーキテクチャ/設計判断、トレードオフの決定
-      - 難解バグの根本原因解析
-      - 高信頼が必要なコードレビュー
-      - 未経験領域の探索的判断
-    - **Flash を優先** — 作業型・高トークン・低コスト:
-      - 設計確定後の機械的実装・リファクタ
-      - ファイル横断の大量変更、ボイラープレート生成
-      - ログ/調査の要約、一次パス
-      - lint/テスト修正などの反復ループ(0731 でエージェント性能が大幅強化)
-    - **gpt-5.6-luna クラスのタスクは flash で代替する**(flash 0731 は luna の仕事を十分こなす)
-    - コスト目安(出力 $/M tokens): terra $12 ≫ luna $0.6〜1.2 ≥ flash $0.28。出力トークンが多いタスクほど flash が有利。
-  - Specialty:
-
-    | Model | Best for |
-    | ------- | ---------- |
-    | `opencode-go/kimi-k2.7-code` | Complex autonomous coding tasks |
-    | `opencode-go/glm-5.2` | Front-end / web development |
-    | `opencode-go/qwen3.7-max` | High-difficulty reasoning (alt. to Codex) |
+- Model selection — decide by task type. Do not hardcode prices or version-dated capability claims in this file; they decay. Resolve model availability and pricing from `settings.json` (`enabledModels`, `subagents`) and the live catalog (`models-store.json`). The names below are current picks per role, not constants.
+  - Judgment-type (high confidence, few output tokens): architecture/design decisions, hard-debugging root-cause analysis, code reviews you must trust, unfamiliar exploration.
+    - Current pick: `openai-codex/gpt-5.6-terra:high` (also the delegation default). Option: `--model 'openai-codex/gpt-5.6-terra:high'`
+  - Work-type (high tokens, low unit cost): mechanical implementation from a fixed design, cross-file bulk edits / boilerplate, log or investigation summarization, lint/test fix loops.
+    - Current pick: `opencode-go/qwen3.8-flash:xhigh` (operated at xhigh; startup level set via `modelThinkingLevels`)
+    - Mid-tier when xhigh flash is not enough: `openai-codex/gpt-5.6-luna:max` (operated at max) or `opencode-go/deepseek-v4-pro`
+    - Re-check the catalog periodically for the best entry in this lane (newer/cheaper candidates appear over time, e.g. `glm-5.3-flash`).
+  - Subagents: defaults come from `settings.json` (`subagents.defaultModel` / `defaultThinking` / `agentOverrides`). Do not state model advice here that contradicts them.
+  - Specialty alternatives (verify they are still enabled): `opencode-go/kimi-k2.7-code` complex autonomous coding · `opencode-go/glm-5.2` front-end / web · `opencode-go/qwen3.7-max` hard reasoning (Codex alternative).
 
 - When calling an agent, clearly communicate the background, goal, expected output, and what not to do.
 
