@@ -24,7 +24,8 @@
 - To keep context clean and preserve accuracy, speed, and cost efficiency, proactively delegate yak shaving and work outside the current focus to an appropriate model agent.
   - Good example: When asked to implement something, delegate design, review, or behavior verification to other agents.
   - Bad example: When encountering a deep-rooted error, trying to solve it yourself without launching a debugging agent.
-- How to call an agent: `pi --model <provider/model:effort> --fallback-models <provider/model:effort>,... -p '<instructions>'` (left-priority fallback)
+- How to call an agent: `pi --model <provider/model:effort> -p '<instructions>'`
+  - NOTE (2026-09-06): `--fallback-models` is NOT an option in pi 0.84.4 (`Unknown option`, exit 3s in a pueue run). For fallback, retry in a wrapper: `pi --model A -p '...' </dev/null || pi --model B -p '...' </dev/null`. Re-add this flag only after verifying it exists in the installed pi (`pi --help | grep fallback`).
   - When a delegated task needs a specific skill, specify it in the prompt: `pi ... -p '/skill:<skill-name> <instructions>'`
 - Model selection — decide by task type. Do not hardcode prices or version-dated capability claims in this file; they decay. Resolve model availability and pricing from `settings.json` (`enabledModels`, `subagents`) and the live catalog (`models-store.json`). The names below are current picks per role, not constants.
   - Judgment-type (high confidence, few output tokens): architecture/design decisions, hard-debugging root-cause analysis, code reviews you must trust, unfamiliar exploration.
