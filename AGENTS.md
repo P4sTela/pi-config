@@ -37,7 +37,7 @@
     - Re-check the catalog periodically for the best entry in this lane (newer/cheaper candidates appear over time).
   - Subagents: defaults come from `settings.json` (`subagents.defaultModel` / `defaultThinking` / `agentOverrides`). Do not state model advice here that contradicts them.
   - OpenCode Go allowances are per model (5-hour 20% / weekly 50% of the monthly limit). When one model is exhausted, switch to another model in the same lane rather than waiting.
-  - `anthropic/*` is billed per token as extra usage from pi, not from the Claude plan. Do not delegate to it unless the user asks.
+  - `anthropic/*` draws from the Claude Pro plan limits (5-hour session and weekly; verified 2026-11-14 via the OAuth usage endpoint with extra usage disabled). The allowance is small, so do not delegate to it unless the user asks.
 
 - When calling an agent, clearly communicate the background, goal, expected output, and what not to do.
 
