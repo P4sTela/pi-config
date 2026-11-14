@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "firecrawl": {
+      "command": "/Users/p4stela/.agents/scripts/firecrawl-mcp"
+    }
+  }
+}
