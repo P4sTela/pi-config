@@ -25,17 +25,19 @@
   - Good example: When asked to implement something, delegate design, review, or behavior verification to other agents.
   - Bad example: When encountering a deep-rooted error, trying to solve it yourself without launching a debugging agent.
 - How to call an agent: `pi --model <provider/model:effort> -p '<instructions>'`
-  - NOTE (2026-09-06): `--fallback-models` is NOT an option in pi 0.84.4 (`Unknown option`, exit 3s in a pueue run). For fallback, retry in a wrapper: `pi --model A -p '...' </dev/null || pi --model B -p '...' </dev/null`. Re-add this flag only after verifying it exists in the installed pi (`pi --help | grep fallback`).
+  - NOTE (re-verified 2026-11-14 on pi 1.5.2): `--fallback-models` is NOT a pi option (`Unknown option`). For fallback, retry in a wrapper: `pi --model A -p '...' </dev/null || pi --model B -p '...' </dev/null`. Re-add this flag only after verifying it exists in the installed pi (`pi --help | grep fallback`).
   - When a delegated task needs a specific skill, specify it in the prompt: `pi ... -p '/skill:<skill-name> <instructions>'`
 - Model selection — decide by task type. Do not hardcode prices or version-dated capability claims in this file; they decay. Resolve model availability and pricing from `settings.json` (`enabledModels`, `subagents`) and the live catalog (`models-store.json`). The names below are current picks per role, not constants.
   - Judgment-type (high confidence, few output tokens): architecture/design decisions, hard-debugging root-cause analysis, code reviews you must trust, unfamiliar exploration.
-    - Current pick: `openai-codex/gpt-5.6-terra:high` (also the delegation default). Option: `--model 'openai-codex/gpt-5.6-terra:high'`
+    - Current pick: `opencode-go/hy4:high` (reviews, routine judgment). Option: `--model 'opencode-go/hy4:high'`
+    - Hardest calls only (small monthly allowance, a few tasks per month each): `opencode-go/gemini-4-argon:high`, `opencode-go/kimi-k3.1-pro:high`.
   - Work-type (high tokens, low unit cost): mechanical implementation from a fixed design, cross-file bulk edits / boilerplate, log or investigation summarization, lint/test fix loops.
-    - Current pick: `opencode-go/qwen3.8-flash:xhigh` (operated at xhigh; startup level set via `modelThinkingLevels`)
-    - Mid-tier when xhigh flash is not enough: `openai-codex/gpt-5.6-luna:max` (operated at max) or `opencode-go/deepseek-v4-pro`
-    - Re-check the catalog periodically for the best entry in this lane (newer/cheaper candidates appear over time, e.g. `glm-5.3-flash`).
+    - Current pick: `opencode-go/deepseek-v4.1-flash:max` (also the session default; largest allowance; startup level set via `modelThinkingLevels`)
+    - Cheap exploration / summarization on a separate allowance: `opencode-go/gpt-6-luna:max`
+    - Re-check the catalog periodically for the best entry in this lane (newer/cheaper candidates appear over time).
   - Subagents: defaults come from `settings.json` (`subagents.defaultModel` / `defaultThinking` / `agentOverrides`). Do not state model advice here that contradicts them.
-  - Specialty alternatives (verify they are still enabled): `opencode-go/kimi-k2.7-code` complex autonomous coding · `opencode-go/glm-5.2` front-end / web · `opencode-go/qwen3.7-max` hard reasoning (Codex alternative).
+  - OpenCode Go allowances are per model (5-hour 20% / weekly 50% of the monthly limit). When one model is exhausted, switch to another model in the same lane rather than waiting.
+  - `anthropic/*` is billed per token as extra usage from pi, not from the Claude plan. Do not delegate to it unless the user asks.
 
 - When calling an agent, clearly communicate the background, goal, expected output, and what not to do.
 

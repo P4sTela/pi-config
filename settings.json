@@ -2,51 +2,56 @@
   "lastChangelogVersion": "1.5.2",
   "theme": "dark",
   "defaultProvider": "opencode-go",
-  "defaultModel": "qwen3.8-flash",
+  "defaultModel": "deepseek-v4.1-flash",
   "defaultThinkingLevel": "high",
   "modelThinkingLevels": {
-    "opencode-go/qwen3.8-flash": "xhigh",
-    "openai-codex/gpt-5.6-luna": "max"
+    "opencode-go/deepseek-v4.1-flash": "max",
+    "opencode-go/gpt-6-luna": "max"
   },
   "enabledModels": [
-    "deepseek-v4-pro",
-    "deepseek-v4-flash",
-    "kimi-k2.7-code",
-    "glm-5.2",
-    "qwen3.7-max",
-    "qwen3.8-flash",
-    "gpt-5.6-*"
+    "opencode-go/deepseek-v4.1-flash",
+    "opencode-go/hy4",
+    "opencode-go/gpt-6-luna",
+    "opencode-go/gemini-4-argon",
+    "opencode-go/kimi-k3.1-pro",
+    "opencode-go/claude-haiku-5-5",
+    "opencode-go/qwen3.8-flash"
   ],
   "subagents": {
-    "defaultModel": "openai-codex/gpt-5.6-luna",
+    "defaultModel": "opencode-go/gpt-6-luna",
     "defaultThinking": "max",
     "agentOverrides": {
       "scout": {
-        "model": "openai-codex/gpt-5.6-luna",
+        "model": "opencode-go/gpt-6-luna",
         "thinking": "max"
       },
       "researcher": {
-        "model": "openai-codex/gpt-5.6-luna",
+        "model": "opencode-go/gpt-6-luna",
         "thinking": "max"
       },
       "delegate": {
-        "model": "openai-codex/gpt-5.6-luna",
+        "model": "opencode-go/gpt-6-luna",
         "thinking": "max"
       },
       "context-builder": {
-        "model": "openai-codex/gpt-5.6-terra"
-      },
-      "planner": {
-        "model": "openai-codex/gpt-5.6-terra"
-      },
-      "oracle": {
-        "model": "openai-codex/gpt-5.6-terra"
-      },
-      "reviewer": {
-        "model": "openai-codex/gpt-5.6-terra"
+        "model": "opencode-go/deepseek-v4.1-flash",
+        "thinking": "max"
       },
       "worker": {
-        "model": "openai-codex/gpt-5.6-terra"
+        "model": "opencode-go/deepseek-v4.1-flash",
+        "thinking": "max"
+      },
+      "planner": {
+        "model": "opencode-go/kimi-k3.1-pro",
+        "thinking": "high"
+      },
+      "oracle": {
+        "model": "opencode-go/gemini-4-argon",
+        "thinking": "high"
+      },
+      "reviewer": {
+        "model": "opencode-go/hy4",
+        "thinking": "high"
       }
     }
   },
