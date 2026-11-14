@@ -72,9 +72,6 @@
 - Use `rpiv-todo` as the source of truth for multi-step work: define concrete completion criteria, dependencies, and verification commands before implementation.
 - Use `epic-progress` (local extension, integrated with rpiv-todo tasks) when breaking a large goal into subtasks: **create an epic task first, then mark every child with `metadata: { epic: <id> }`**. Tasks created without `metadata.epic` are not counted by the board — they only appear as flat "uncategorized" and the widget falls back to overall progress. This applies to delegated agents too: tell them to attach the epic link when creating tasks. Track `status` / `activeForm` / `blockedBy`; the editor widget and `/progress` show progress (done/total, in-progress, blocked) at a glance.
 - Use `pi-subagents` for independent research, implementation, or review work; keep one clear owner per mutable workspace.
-- Use `pi-plan` (`/plan`) for read-only exploration and structured plans before implementing. Bind the plan file to the session with `bind_plan` so the dashboard can render it.
-- Use `checkpoint-pi` (enabled): it snapshots the full worktree (tracked + untracked) as Git refs at every turn start, creating an automatic "before restore" checkpoint, so you can restore code when a conversation forks and you want to go back.
-- Use `pi-review` (`/review`) for a strict maintainer review of the work before considering it done; add focus text to scope it (`/review focus on <area>`).
 - Use `ask_user_question` whenever requirements are ambiguous and you cannot proceed without a concrete decision — ask up to 4 structured questions with 2-4 options instead of guessing on material decisions.
 - Use `context-mode` when command output, logs, or documentation may be large; summarize or query the data instead of loading it wholesale into the conversation.
 - Use `pi-lens` diagnostics and project tests after edits. Do not consider a task complete while blocking diagnostics or test failures remain.
