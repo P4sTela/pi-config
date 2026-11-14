@@ -58,7 +58,6 @@
     "npm:pi-lens",
     "npm:pi-subagents",
     "npm:context-mode",
-    "npm:@juicesharp/rpiv-todo",
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:@ff-labs/pi-fff"
   ],

@@ -69,8 +69,6 @@
 
 ## Pi Extension Workflow
 
-- Use `rpiv-todo` as the source of truth for multi-step work: define concrete completion criteria, dependencies, and verification commands before implementation.
-- Use `epic-progress` (local extension, integrated with rpiv-todo tasks) when breaking a large goal into subtasks: **create an epic task first, then mark every child with `metadata: { epic: <id> }`**. Tasks created without `metadata.epic` are not counted by the board — they only appear as flat "uncategorized" and the widget falls back to overall progress. This applies to delegated agents too: tell them to attach the epic link when creating tasks. Track `status` / `activeForm` / `blockedBy`; the editor widget and `/progress` show progress (done/total, in-progress, blocked) at a glance.
 - Use `pi-subagents` for independent research, implementation, or review work; keep one clear owner per mutable workspace.
 - Use `ask_user_question` whenever requirements are ambiguous and you cannot proceed without a concrete decision — ask up to 4 structured questions with 2-4 options instead of guessing on material decisions.
 - Use `context-mode` when command output, logs, or documentation may be large; summarize or query the data instead of loading it wholesale into the conversation.
