@@ -12,7 +12,6 @@ bin/
 models-store.json
 
 # Per-extension local state (regenerated, not source)
-fff/
 kanban/
 
 # Packages installed via `pi install` (re-installable, not source)
