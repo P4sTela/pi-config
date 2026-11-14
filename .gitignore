@@ -23,3 +23,11 @@ npm/
 .DS_Store
 *.swp
 node_modules/
+
+# MCP config (contains API keys)
+mcp.json
+
+# Extension runtime state (regenerated, not source)
+missions/
+pi-subagents/
+pi-web-access/

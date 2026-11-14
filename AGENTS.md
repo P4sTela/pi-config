@@ -96,3 +96,11 @@
   pueue wait <task-id> # blocks when there is no other parallel work
   pueue log <task-id>  # check results/status
   ```
+
+## ブラウザ操作（browser-use）
+
+- `~/.agents/skills/browser-use` にスキルあり（CLI は `browser-use`、Python を stdin に流す方式）
+- 実行前に専用 Chromium を起動する: `chromium-agents`（CDP `http://127.0.0.1:9334`、headless、プロファイルは `~/.local/state/chromium-agents`）
+- 対話シェルから起動していれば `~/.secrets` の `BU_CDP_URL` / `BU_NAME=agents` が効く。効いていない環境では明示的に:
+  `BU_NAME=agents BU_CDP_URL=http://127.0.0.1:9334 browser-use <<'PY' ... PY`
+- ユーザーの普段使い Chrome は remote debugging が無効なので、そのままでは繋がらない（`chrome://inspect` で許可するか、クラウドブラウザを使う）

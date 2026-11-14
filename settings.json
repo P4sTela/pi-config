@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.84.4",
+  "lastChangelogVersion": "1.5.2",
   "theme": "dark",
   "defaultProvider": "opencode-go",
   "defaultModel": "qwen3.8-flash",
@@ -25,54 +25,30 @@
     "agentOverrides": {
       "scout": {
         "model": "openai-codex/gpt-5.6-luna",
-        "thinking": "max",
-        "fallbackModels": [
-          "opencode-go/kimi-k2.7-code"
-        ]
+        "thinking": "max"
       },
       "researcher": {
         "model": "openai-codex/gpt-5.6-luna",
-        "thinking": "max",
-        "fallbackModels": [
-          "opencode-go/kimi-k2.7-code"
-        ]
+        "thinking": "max"
       },
       "delegate": {
         "model": "openai-codex/gpt-5.6-luna",
-        "thinking": "max",
-        "fallbackModels": [
-          "opencode-go/kimi-k2.7-code"
-        ]
+        "thinking": "max"
       },
       "context-builder": {
-        "model": "openai-codex/gpt-5.6-terra",
-        "fallbackModels": [
-          "opencode-go/kimi-k2.7-code"
-        ]
+        "model": "openai-codex/gpt-5.6-terra"
       },
       "planner": {
-        "model": "openai-codex/gpt-5.6-terra",
-        "fallbackModels": [
-          "opencode-go/kimi-k2.7-code"
-        ]
+        "model": "openai-codex/gpt-5.6-terra"
       },
       "oracle": {
-        "model": "openai-codex/gpt-5.6-terra",
-        "fallbackModels": [
-          "opencode-go/kimi-k2.7-code"
-        ]
+        "model": "openai-codex/gpt-5.6-terra"
       },
       "reviewer": {
-        "model": "openai-codex/gpt-5.6-terra",
-        "fallbackModels": [
-          "opencode-go/kimi-k2.7-code"
-        ]
+        "model": "openai-codex/gpt-5.6-terra"
       },
       "worker": {
-        "model": "openai-codex/gpt-5.6-terra",
-        "fallbackModels": [
-          "opencode-go/kimi-k2.7-code"
-        ]
+        "model": "openai-codex/gpt-5.6-terra"
       }
     }
   },
@@ -89,5 +65,11 @@
     "npm:pi-review",
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:@ff-labs/pi-fff"
-  ]
+  ],
+  "extensionChangelogVersions": {
+    "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.47.0",
+    "{\"source\":\"npm:pi-lens\",\"scope\":\"user\"}": "4.4.12",
+    "{\"source\":\"npm:pi-subagents\",\"scope\":\"user\"}": "0.88.1",
+    "{\"source\":\"npm:pine-of-glass\",\"scope\":\"user\"}": "0.18.4"
+  }
 }
